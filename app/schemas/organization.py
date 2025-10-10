@@ -1,66 +1,45 @@
-from pydantic import BaseModel, EmailStr
-from typing import Optional, Dict, Any
-from datetime import datetime
+from pydantic import BaseModel, Field
 from uuid import UUID
+from typing import Optional, List, Any
 
+# Schéma de base pour Site
+class SiteBase(BaseModel):
+    name: str = Field(..., example="Siège Social")
+    address: Optional[str] = Field(None, example="123 Rue de la République")
+    timezone: str = Field("UTC", example="Europe/Paris")
 
-class OrganizationBase(BaseModel):
-    """Schéma de base organisation"""
-    name: str
-    description: Optional[str] = None
-    plan: str = "free"  # free, basic, premium
-    timezone: str = "Africa/Abidjan"
-    email: Optional[EmailStr] = None
-    phone: Optional[str] = None
-    address: Optional[str] = None
-    settings: Optional[Dict[str, Any]] = {}
+class SiteCreate(SiteBase):
+    organization_id: UUID
 
-
-class OrganizationCreate(OrganizationBase):
-    """Schéma de création d'organisation"""
-    pass
-
-
-class OrganizationUpdate(BaseModel):
-    """Schéma de mise à jour d'organisation"""
+class SiteUpdate(SiteBase):
     name: Optional[str] = None
-    description: Optional[str] = None
-    plan: Optional[str] = None
-    timezone: Optional[str] = None
-    email: Optional[EmailStr] = None
-    phone: Optional[str] = None
     address: Optional[str] = None
-    is_active: Optional[bool] = None
-    settings: Optional[Dict[str, Any]] = None
+    timezone: Optional[str] = None
 
-
-class Organization(OrganizationBase):
-    """Schéma de réponse organisation"""
+class Site(SiteBase):
     id: UUID
-    is_active: bool
-    created_at: datetime
-    updated_at: Optional[datetime] = None
-    
+    organization_id: UUID
+
     class Config:
         from_attributes = True
 
+# Schéma de base pour Organization
+class OrganizationBase(BaseModel):
+    name: str = Field(..., example="Ma Grande Entreprise")
+    plan: Optional[str] = Field(None, example="premium")
+    settings: Optional[dict[str, Any]] = Field(None, example={"theme": "dark"})
 
-class OrganizationList(BaseModel):
-    """Liste paginée d'organisations"""
-    total: int
-    page: int
-    page_size: int
-    organizations: list[Organization]
+class OrganizationCreate(OrganizationBase):
+    pass
 
+class OrganizationUpdate(OrganizationBase):
+    name: Optional[str] = None
+    plan: Optional[str] = None
+    settings: Optional[dict[str, Any]] = None
 
-class OrganizationStats(BaseModel):
-    """Statistiques d'une organisation"""
-    organization_id: UUID
-    organization_name: str
-    total_employees: int
-    active_employees: int
-    inactive_employees: int
-    total_devices: int
-    active_devices: int
-    total_attendances_today: int
-    attendance_rate_today: float
+class Organization(OrganizationBase):
+    id: UUID
+    sites: List[Site] = []
+
+    class Config:
+        from_attributes = True

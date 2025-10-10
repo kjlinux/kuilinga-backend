@@ -1,70 +1,26 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from uuid import UUID
-from typing import Optional, Dict, Any
-from datetime import datetime
-from app.models.device import DeviceType, DeviceStatus
+from typing import Optional
+from app.models.device import DeviceStatus
 
-
+# Schéma de base pour Device
 class DeviceBase(BaseModel):
-    """Schéma de base device"""
-    serial_number: str
-    name: str
-    device_type: DeviceType
-    firmware_version: Optional[str] = None
-    configuration: Optional[Dict[str, Any]] = {}
-    metadata: Optional[Dict[str, Any]] = {}
-
+    serial: str = Field(..., example="XYZ-123456789")
+    type: Optional[str] = Field(None, example="Terminal-A")
+    status: DeviceStatus = Field(DeviceStatus.OFFLINE, example=DeviceStatus.ONLINE)
 
 class DeviceCreate(DeviceBase):
-    """Schéma de création de device"""
-    organization_id: int
-
+    site_id: UUID
 
 class DeviceUpdate(BaseModel):
-    """Schéma de mise à jour de device"""
-    name: Optional[str] = None
+    serial: Optional[str] = None
+    type: Optional[str] = None
     status: Optional[DeviceStatus] = None
-    is_online: Optional[bool] = None
-    firmware_version: Optional[str] = None
-    configuration: Optional[Dict[str, Any]] = None
-    metadata: Optional[Dict[str, Any]] = None
-
+    site_id: Optional[UUID] = None
 
 class Device(DeviceBase):
-    """Schéma de réponse device"""
-    id: int
-    organization_id: int
-    status: DeviceStatus
-    is_online: bool
-    last_ping: Optional[str] = None
-    created_at: datetime
-    updated_at: Optional[datetime] = None
-    
+    id: UUID
+    site_id: UUID
+
     class Config:
         from_attributes = True
-
-
-class DeviceList(BaseModel):
-    """Liste paginée de devices"""
-    total: int
-    page: int
-    page_size: int
-    devices: list[Device]
-
-
-class DevicePing(BaseModel):
-    """Schéma de ping device"""
-    device_id: UUID
-    timestamp: datetime
-    status: str
-    metadata: Optional[Dict[str, Any]] = {}
-
-
-class DeviceStats(BaseModel):
-    """Statistiques d'un device"""
-    device_id: UUID
-    device_name: str
-    total_attendances: int
-    attendances_today: int
-    last_attendance: Optional[datetime] = None
-    uptime_percentage: float
