@@ -2,6 +2,12 @@
 Script d'initialisation de la base de données
 Crée un superuser par défaut
 """
+import sys
+from pathlib import Path
+
+# Ajouter le répertoire parent au PYTHONPATH
+sys.path.append(str(Path(__file__).parent.parent))
+
 from sqlalchemy.orm import Session
 from app.db.session import SessionLocal, engine, Base
 from app.models.user import User, UserRole
@@ -29,9 +35,9 @@ def init_db(db: Session) -> None:
         )
         db.add(user)
         db.commit()
-        print("Superuser créé: admin@kuilinga.com / admin123")
+        print("✅ Superuser créé: admin@kuilinga.com / admin123")
     else:
-        print("Superuser existe déjà")
+        print("ℹ️  Superuser existe déjà")
     
     # Créer une organisation de démonstration
     org = db.query(Organization).filter(Organization.name == "KUILINGA Demo").first()
@@ -47,9 +53,9 @@ def init_db(db: Session) -> None:
         )
         db.add(org)
         db.commit()
-        print("Organisation de démonstration créée")
+        print("✅ Organisation de démonstration créée")
     else:
-        print("Organisation de démonstration existe déjà")
+        print("ℹ️  Organisation de démonstration existe déjà")
     
     # Créer quelques employés de test
     existing_employees = db.query(Employee).filter(
@@ -98,23 +104,23 @@ def init_db(db: Session) -> None:
             db.add(employee)
         
         db.commit()
-        print(f"{len(test_employees)} employés de test créés")
+        print(f"✅ {len(test_employees)} employés de test créés")
     else:
-        print("Employés de test existent déjà")
+        print("ℹ️  Employés de test existent déjà")
 
 
 def main() -> None:
     """Fonction principale"""
     print("🔧 Création des tables...")
     Base.metadata.create_all(bind=engine)
-    print("Tables créées")
+    print("✅ Tables créées")
     
     print("\n🔧 Initialisation des données...")
     db = SessionLocal()
     try:
         init_db(db)
-        print("\nBase de données initialisée avec succès!")
-        print("\nInformations de connexion:")
+        print("\n✅ Base de données initialisée avec succès!")
+        print("\n📋 Informations de connexion:")
         print("   Email: admin@kuilinga.com")
         print("   Password: admin123")
     finally:
