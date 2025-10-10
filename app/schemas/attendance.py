@@ -1,33 +1,32 @@
 from pydantic import BaseModel, Field
-from uuid import UUID
 from datetime import datetime
 from typing import Optional, Any
 from app.models.attendance import AttendanceType
 
-# Schéma de base pour les pointages
+# Propriétés partagées pour les pointages
 class AttendanceBase(BaseModel):
     timestamp: datetime = Field(..., example=datetime.now())
     type: AttendanceType = Field(..., example=AttendanceType.IN)
-    geo: Optional[str] = Field(None, example="48.8584,2.2945")
-    metadata: Optional[dict[str, Any]] = Field(None)
+    geo: Optional[str] = Field(None, example="5.3346, -4.0022") # Lat, Lon
+    metadata: Optional[dict[str, Any]] = Field({}, example={"source": "mobile_app"})
 
-    class Config:
-        from_attributes = True
-
-# Schéma pour la création d'un pointage
+# Propriétés pour la création d'un pointage
 class AttendanceCreate(AttendanceBase):
-    employee_id: UUID
-    device_id: Optional[UUID] = None
+    employee_id: str
+    device_id: Optional[str] = None
 
-# Schéma pour la mise à jour d'un pointage (généralement non utilisé, mais possible)
+# Propriétés pour la mise à jour d'un pointage (rarement utilisé)
 class AttendanceUpdate(BaseModel):
     timestamp: Optional[datetime] = None
     type: Optional[AttendanceType] = None
     geo: Optional[str] = None
     metadata: Optional[dict[str, Any]] = None
 
-# Schéma pour la lecture des données d'un pointage
+# Propriétés à retourner via l'API
 class Attendance(AttendanceBase):
-    id: UUID
-    employee_id: UUID
-    device_id: Optional[UUID] = None
+    id: str
+    employee_id: str
+    device_id: Optional[str] = None
+
+    class Config:
+        from_attributes = True

@@ -1,30 +1,34 @@
 from pydantic import BaseModel, EmailStr, Field
-from uuid import UUID
 from app.models.user import UserRole
 from typing import Optional
 
-# Schéma de base pour les propriétés communes
+# Propriétés partagées par tous les schémas de l'utilisateur
 class UserBase(BaseModel):
     email: EmailStr = Field(..., example="johndoe@example.com")
+    full_name: Optional[str] = Field(None, example="John Doe")
+    phone: Optional[str] = Field(None, example="+1234567890")
     role: UserRole = Field(..., example=UserRole.EMPLOYEE)
+    organization_id: Optional[str] = Field(None, example="org_a3a2e3a4-5b6c-7d8e-9f0a-1b2c3d4e5f67")
 
-    class Config:
-        from_attributes = True
-
-# Schéma pour la création d'un utilisateur (avec mot de passe)
+# Propriétés à recevoir lors de la création d'un utilisateur
 class UserCreate(UserBase):
     password: str = Field(..., min_length=8, example="strongpassword123")
 
-# Schéma pour la mise à jour d'un utilisateur (champs optionnels)
+# Propriétés à recevoir lors de la mise à jour d'un utilisateur
 class UserUpdate(BaseModel):
     email: Optional[EmailStr] = Field(None, example="johndoe_new@example.com")
-    role: Optional[UserRole] = Field(None, example=UserRole.MANAGER)
+    full_name: Optional[str] = Field(None, example="John A. Doe")
+    phone: Optional[str] = Field(None, example="+1987654321")
     password: Optional[str] = Field(None, min_length=8, example="new_strong_password")
-    is_active: Optional[bool] = None
-    is_superuser: Optional[bool] = None
+    role: Optional[UserRole] = Field(None, example=UserRole.MANAGER)
+    is_active: Optional[bool] = Field(None)
+    organization_id: Optional[str] = Field(None)
 
-# Schéma pour la lecture des données d'un utilisateur (sans mot de passe)
+# Propriétés à retourner à l'API
 class User(UserBase):
-    id: UUID = Field(..., example="a3a2e3a4-5b6c-7d8e-9f0a-1b2c3d4e5f67")
+    id: str = Field(..., example="user_a3a2e3a4-5b6c-7d8e-9f0a-1b2c3d4e5f67")
     is_active: bool
     is_superuser: bool
+
+    class Config:
+        from_attributes = True

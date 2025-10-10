@@ -1,106 +1,123 @@
 from typing import List, Any
-from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from app import crud, models, schemas
-from app import dependencies
+from app.dependencies import get_db, get_current_active_user, require_role
 from app.models.user import UserRole
 
 router = APIRouter()
 
-@router.get("/", response_model=List[schemas.User])
+@router.get(
+    "/",
+    response_model=List[schemas.User],
+    summary="Lister tous les utilisateurs",
+    description="Récupère une liste paginée de tous les utilisateurs. **Requiert le rôle 'admin'.**",
+)
 def read_users(
-    db: Session = Depends(dependencies.get_db),
-    skip: int = 0,
-    limit: int = 100,
-    current_user: models.User = Depends(dependencies.get_current_active_superuser),
+    db: Session = Depends(get_db),
+    skip: int = Query(0, description="Nombre d'utilisateurs à sauter"),
+    limit: int = Query(100, description="Nombre maximum d'utilisateurs à retourner"),
+    current_user: models.User = Depends(require_role(UserRole.ADMIN)),
 ) -> Any:
-    """
-    Récupérer la liste des utilisateurs.
-    (Réservé aux super-utilisateurs)
-    """
     users = crud.user.get_multi(db, skip=skip, limit=limit)
     return users
 
-@router.post("/", response_model=schemas.User, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/",
+    response_model=schemas.User,
+    status_code=status.HTTP_201_CREATED,
+    summary="Créer un nouvel utilisateur",
+    description="Crée un nouvel utilisateur dans le système. **Requiert le rôle 'admin'.**",
+    responses={
+        400: {"description": "Un utilisateur avec cet email existe déjà"},
+    },
+)
 def create_user(
     *,
-    db: Session = Depends(dependencies.get_db),
+    db: Session = Depends(get_db),
     user_in: schemas.UserCreate,
-    current_user: models.User = Depends(dependencies.require_role(UserRole.ADMIN)),
+    current_user: models.User = Depends(require_role(UserRole.ADMIN)),
 ) -> Any:
-    """
-    Créer un nouvel utilisateur.
-    Seuls les administrateurs peuvent créer des utilisateurs.
-    """
     user = crud.user.get_by_email(db, email=user_in.email)
     if user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="The user with this email already exists in the system.",
+            detail="Un utilisateur avec cet email existe déjà.",
         )
     user = crud.user.create(db=db, obj_in=user_in)
     return user
 
-@router.get("/me", response_model=schemas.User)
-def read_user_me(
-    current_user: models.User = Depends(dependencies.get_current_active_user),
-) -> Any:
-    """
-    Get current user.
-    """
-    return current_user
-
-@router.get("/{user_id}", response_model=schemas.User)
+@router.get(
+    "/{user_id}",
+    response_model=schemas.User,
+    summary="Lire un utilisateur par ID",
+    description="Récupère les informations d'un utilisateur spécifique par son ID.",
+    responses={
+        403: {"description": "Permissions insuffisantes"},
+        404: {"description": "Utilisateur non trouvé"},
+    },
+)
 def read_user(
     *,
-    db: Session = Depends(dependencies.get_db),
-    user_id: UUID,
-    current_user: models.User = Depends(dependencies.get_current_active_user),
+    db: Session = Depends(get_db),
+    user_id: str,
+    current_user: models.User = Depends(get_current_active_user),
 ) -> Any:
-    """
-    Récupérer un utilisateur par son ID.
-    """
     user = crud.user.get(db=db, id=user_id)
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-    if user.id != current_user.id and not crud.user.is_superuser(current_user):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Utilisateur non trouvé")
+
+    if user.id != current_user.id and not current_user.is_superuser:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Permissions insuffisantes")
+
     return user
 
-@router.put("/{user_id}", response_model=schemas.User)
+@router.put(
+    "/{user_id}",
+    response_model=schemas.User,
+    summary="Mettre à jour un utilisateur",
+    description="Met à jour les informations d'un utilisateur. Un utilisateur ne peut mettre à jour que ses propres informations, sauf un admin.",
+    responses={
+        403: {"description": "Permissions insuffisantes"},
+        404: {"description": "Utilisateur non trouvé"},
+    },
+)
 def update_user(
     *,
-    db: Session = Depends(dependencies.get_db),
-    user_id: UUID,
+    db: Session = Depends(get_db),
+    user_id: str,
     user_in: schemas.UserUpdate,
-    current_user: models.User = Depends(dependencies.get_current_active_user),
+    current_user: models.User = Depends(get_current_active_user),
 ) -> Any:
-    """
-    Mettre à jour un utilisateur.
-    """
     user = crud.user.get(db=db, id=user_id)
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-    if user.id != current_user.id and not crud.user.is_superuser(current_user):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Utilisateur non trouvé")
+
+    if user.id != current_user.id and not current_user.is_superuser:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Permissions insuffisantes")
+
     user = crud.user.update(db=db, db_obj=user, obj_in=user_in)
     return user
 
-@router.delete("/{user_id}", response_model=schemas.User)
+@router.delete(
+    "/{user_id}",
+    response_model=schemas.User,
+    summary="Supprimer un utilisateur",
+    description="Supprime un utilisateur du système. **Requiert le rôle 'admin'.**",
+    responses={
+        403: {"description": "Permissions insuffisantes"},
+        404: {"description": "Utilisateur non trouvé"},
+    },
+)
 def delete_user(
     *,
-    db: Session = Depends(dependencies.get_db),
-    user_id: UUID,
-    current_user: models.User = Depends(dependencies.get_current_active_superuser),
+    db: Session = Depends(get_db),
+    user_id: str,
+    current_user: models.User = Depends(require_role(UserRole.ADMIN)),
 ) -> Any:
-    """
-    Supprimer un utilisateur.
-    """
     user = crud.user.get(db=db, id=user_id)
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-    user = crud.user.delete(db=db, id=user_id)
-    if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-    return user
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Utilisateur non trouvé")
+
+    deleted_user = crud.user.remove(db=db, id=user_id)
+    return deleted_user

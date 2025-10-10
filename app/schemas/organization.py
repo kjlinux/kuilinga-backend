@@ -1,15 +1,14 @@
-from pydantic import BaseModel, Field
-from uuid import UUID
+from pydantic import BaseModel, Field, EmailStr
 from typing import Optional, List, Any
 
-# Schéma de base pour Site
+# --- Schémas pour Site ---
 class SiteBase(BaseModel):
-    name: str = Field(..., example="Siège Social")
-    address: Optional[str] = Field(None, example="123 Rue de la République")
-    timezone: str = Field("UTC", example="Europe/Paris")
+    name: str = Field(..., example="Siège Social Abidjan")
+    address: Optional[str] = Field(None, example="Plateau, Avenue 123")
+    timezone: str = Field("Africa/Abidjan", example="Africa/Abidjan")
 
 class SiteCreate(SiteBase):
-    organization_id: UUID
+    organization_id: str
 
 class SiteUpdate(SiteBase):
     name: Optional[str] = None
@@ -17,28 +16,38 @@ class SiteUpdate(SiteBase):
     timezone: Optional[str] = None
 
 class Site(SiteBase):
-    id: UUID
-    organization_id: UUID
+    id: str
+    organization_id: str
 
     class Config:
         from_attributes = True
 
-# Schéma de base pour Organization
+# --- Schémas pour Organization ---
 class OrganizationBase(BaseModel):
-    name: str = Field(..., example="Ma Grande Entreprise")
-    plan: Optional[str] = Field(None, example="premium")
-    settings: Optional[dict[str, Any]] = Field(None, example={"theme": "dark"})
+    name: str = Field(..., example="Tanga Group")
+    description: Optional[str] = Field(None, example="Société de technologie")
+    email: Optional[EmailStr] = Field(None, example="contact@tangagroup.com")
+    phone: Optional[str] = Field(None, example="+225 0102030405")
+    timezone: str = Field("Africa/Abidjan", example="Africa/Abidjan")
+    plan: Optional[str] = Field("standard", example="premium")
+    is_active: bool = Field(True)
+    settings: Optional[dict[str, Any]] = Field({}, example={"notifications_enabled": True})
 
 class OrganizationCreate(OrganizationBase):
     pass
 
-class OrganizationUpdate(OrganizationBase):
+class OrganizationUpdate(BaseModel):
     name: Optional[str] = None
+    description: Optional[str] = None
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = None
+    timezone: Optional[str] = None
     plan: Optional[str] = None
+    is_active: Optional[bool] = None
     settings: Optional[dict[str, Any]] = None
 
 class Organization(OrganizationBase):
-    id: UUID
+    id: str
     sites: List[Site] = []
 
     class Config:
