@@ -9,7 +9,8 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
 from sqlalchemy.orm import Session
-from app.db.session import SessionLocal, engine, Base
+from app.db.session import SessionLocal, engine
+from app.db.base import Base
 from app.models.user import User, UserRole
 from app.models.organization import Organization
 from app.models.employee import Employee

@@ -1,28 +1,17 @@
 import uuid
-from sqlalchemy import Column, DateTime
-from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.sql import func
-from app.db.session import Base
+from sqlalchemy import Column, String
+from sqlalchemy.ext.declarative import as_declarative
+from sqlalchemy.orm import declared_attr
 
+def generate_uuid():
+    return str(uuid.uuid4())
 
-class BaseModel(Base):
-    """Modèle de base avec UUID et timestamps"""
-    __abstract__ = True
+@as_declarative()
+class BaseModel:
+    id = Column(String, primary_key=True, default=generate_uuid)
+    __name__: str
 
-    id = Column(
-        UUID(as_uuid=True),
-        primary_key=True,
-        default=uuid.uuid4,
-        unique=True,
-        index=True,
-        nullable=False
-    )
-
-    created_at = Column(
-        DateTime(timezone=True),
-        server_default=func.now()
-    )
-    updated_at = Column(
-        DateTime(timezone=True),
-        onupdate=func.now()
-    )
+    # Generate __tablename__ automatically
+    @declared_attr
+    def __tablename__(cls) -> str:
+        return cls.__name__.lower() + "s"
