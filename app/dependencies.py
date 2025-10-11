@@ -9,7 +9,7 @@ from app.core.config import settings
 from app.db.session import SessionLocal
 from app.schemas.token import TokenPayload
 from app.crud.user import user as crud_user
-from app.models.user import User
+from app.models.user import User, UserRole
 
 reusable_oauth2 = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/auth/access-token"
@@ -55,3 +55,14 @@ def get_current_active_superuser(
             status_code=400, detail="The user doesn't have enough privileges"
         )
     return current_user
+
+
+def require_role(role: UserRole):
+    def role_checker(current_user: User = Depends(get_current_active_user)) -> User:
+        if current_user.role != role and not current_user.is_superuser:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="The user doesn't have enough privileges",
+            )
+        return current_user
+    return role_checker
