@@ -13,7 +13,7 @@ class Attendance(BaseModel):
     timestamp = Column(DateTime(timezone=True), nullable=False)
     type = Column(Enum(AttendanceType), nullable=False)
     geo = Column(String, nullable=True)
-    metadata = Column(JSON, nullable=True)
+    extra_data = Column(JSON, nullable=True)
 
     employee_id = Column(String, ForeignKey("employees.id"), nullable=False)
     device_id = Column(String, ForeignKey("devices.id"), nullable=True)

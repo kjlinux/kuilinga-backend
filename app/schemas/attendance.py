@@ -8,7 +8,7 @@ class AttendanceBase(BaseModel):
     timestamp: datetime = Field(..., example=datetime.now())
     type: AttendanceType = Field(..., example=AttendanceType.IN)
     geo: Optional[str] = Field(None, example="5.3346, -4.0022") # Lat, Lon
-    metadata: Optional[dict[str, Any]] = Field({}, example={"source": "mobile_app"})
+    extra_data: Optional[dict[str, Any]] = Field({}, example={"source": "mobile_app"})
 
 # Propriétés pour la création d'un pointage
 class AttendanceCreate(AttendanceBase):
@@ -20,7 +20,7 @@ class AttendanceUpdate(BaseModel):
     timestamp: Optional[datetime] = None
     type: Optional[AttendanceType] = None
     geo: Optional[str] = None
-    metadata: Optional[dict[str, Any]] = None
+    extra_data: Optional[dict[str, Any]] = None
 
 # Propriétés à retourner via l'API
 class Attendance(AttendanceBase):
