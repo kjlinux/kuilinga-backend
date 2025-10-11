@@ -19,7 +19,7 @@ def generate_attendance_report(
     *,
     db: Session = Depends(get_db),
     report_in: schemas.ReportCreate,
-    current_user: models.User = Depends(require_role(UserRole.MANAGER)),
+    current_user: models.user = Depends(require_role(UserRole.MANAGER)),
 ):
     # NOTE: La logique de génération de rapport n'est pas implémentée.
     # Ceci est une réponse factice pour illustrer le fonctionnement de l'endpoint.

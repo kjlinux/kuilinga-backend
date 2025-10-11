@@ -17,7 +17,7 @@ def read_devices(
     db: Session = Depends(get_db),
     skip: int = Query(0, description="Nombre de terminaux à sauter"),
     limit: int = Query(100, description="Nombre maximum de terminaux à retourner"),
-    current_user: models.User = Depends(require_role(UserRole.MANAGER)),
+    current_user: models.user = Depends(require_role(UserRole.MANAGER)),
 ) -> Any:
     devices = crud.device.get_multi_by_organization(
         db, organization_id=current_user.organization_id, skip=skip, limit=limit
@@ -38,7 +38,7 @@ def create_device(
     *,
     db: Session = Depends(get_db),
     device_in: schemas.DeviceCreate,
-    current_user: models.User = Depends(require_role(UserRole.MANAGER)),
+    current_user: models.user = Depends(require_role(UserRole.MANAGER)),
 ) -> Any:
     if not current_user.is_superuser and current_user.organization_id != device_in.organization_id:
         raise HTTPException(
@@ -62,7 +62,7 @@ def read_device(
     *,
     db: Session = Depends(get_db),
     device_id: str,
-    current_user: models.User = Depends(get_current_active_user),
+    current_user: models.user = Depends(get_current_active_user),
 ) -> Any:
     device = crud.device.get(db=db, id=device_id)
     if not device:
@@ -88,7 +88,7 @@ def update_device(
     db: Session = Depends(get_db),
     device_id: str,
     device_in: schemas.DeviceUpdate,
-    current_user: models.User = Depends(require_role(UserRole.MANAGER)),
+    current_user: models.user = Depends(require_role(UserRole.MANAGER)),
 ) -> Any:
     device = crud.device.get(db=db, id=device_id)
     if not device:
@@ -114,7 +114,7 @@ def delete_device(
     *,
     db: Session = Depends(get_db),
     device_id: str,
-    current_user: models.User = Depends(require_role(UserRole.ADMIN)),
+    current_user: models.user = Depends(require_role(UserRole.ADMIN)),
 ) -> Any:
     device = crud.device.get(db=db, id=device_id)
     if not device:

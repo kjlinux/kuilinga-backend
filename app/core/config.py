@@ -9,8 +9,8 @@ class Settings(BaseSettings):
 
     POSTGRES_SERVER: str = "localhost"
     POSTGRES_USER: str = "postgres"
-    POSTGRES_PASSWORD: str = "password"
-    POSTGRES_DB: str = "kuilinga"
+    POSTGRES_PASSWORD: str = ""
+    POSTGRES_DB: str = "kuilinga_db"
     SQLALCHEMY_DATABASE_URI: str = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_SERVER}/{POSTGRES_DB}"
 
     FIRST_SUPERUSER: str = "admin@example.com"

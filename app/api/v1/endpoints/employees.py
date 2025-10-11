@@ -17,7 +17,7 @@ def read_employees(
     db: Session = Depends(get_db),
     skip: int = Query(0, description="Nombre d'employés à sauter"),
     limit: int = Query(100, description="Nombre maximum d'employés à retourner"),
-    current_user: models.User = Depends(get_current_active_user),
+    current_user: models.user = Depends(get_current_active_user),
 ) -> Any:
     if current_user.is_superuser:
         employees = crud.employee.get_multi(db, skip=skip, limit=limit)
@@ -41,7 +41,7 @@ def create_employee(
     *,
     db: Session = Depends(get_db),
     employee_in: schemas.EmployeeCreate,
-    current_user: models.User = Depends(require_role(UserRole.MANAGER)),
+    current_user: models.user = Depends(require_role(UserRole.MANAGER)),
 ) -> Any:
     if not current_user.is_superuser and current_user.organization_id != employee_in.organization_id:
         raise HTTPException(
@@ -65,7 +65,7 @@ def read_employee(
     *,
     db: Session = Depends(get_db),
     employee_id: str,
-    current_user: models.User = Depends(get_current_active_user),
+    current_user: models.user = Depends(get_current_active_user),
 ) -> Any:
     employee = crud.employee.get(db=db, id=employee_id)
     if not employee:
@@ -91,7 +91,7 @@ def update_employee(
     db: Session = Depends(get_db),
     employee_id: str,
     employee_in: schemas.EmployeeUpdate,
-    current_user: models.User = Depends(require_role(UserRole.MANAGER)),
+    current_user: models.user = Depends(require_role(UserRole.MANAGER)),
 ) -> Any:
     employee = crud.employee.get(db=db, id=employee_id)
     if not employee:
@@ -117,7 +117,7 @@ def delete_employee(
     *,
     db: Session = Depends(get_db),
     employee_id: str,
-    current_user: models.User = Depends(require_role(UserRole.MANAGER)),
+    current_user: models.user = Depends(require_role(UserRole.MANAGER)),
 ) -> Any:
     employee = crud.employee.get(db=db, id=employee_id)
     if not employee:

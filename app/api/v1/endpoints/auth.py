@@ -66,5 +66,5 @@ def refresh_access_token(
     summary="Obtenir l'utilisateur actuel",
     description="Retourne les informations complètes de l'utilisateur actuellement authentifié.",
 )
-def read_users_me(current_user: models.User = Depends(get_current_active_user)):
+def read_users_me(current_user: models.user = Depends(get_current_active_user)):
     return current_user

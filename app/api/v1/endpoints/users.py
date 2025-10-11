@@ -17,7 +17,7 @@ def read_users(
     db: Session = Depends(get_db),
     skip: int = Query(0, description="Nombre d'utilisateurs à sauter"),
     limit: int = Query(100, description="Nombre maximum d'utilisateurs à retourner"),
-    current_user: models.User = Depends(require_role(UserRole.ADMIN)),
+    current_user: models.user = Depends(require_role(UserRole.ADMIN)),
 ) -> Any:
     users = crud.user.get_multi(db, skip=skip, limit=limit)
     return users
@@ -36,7 +36,7 @@ def create_user(
     *,
     db: Session = Depends(get_db),
     user_in: schemas.UserCreate,
-    current_user: models.User = Depends(require_role(UserRole.ADMIN)),
+    current_user: models.user = Depends(require_role(UserRole.ADMIN)),
 ) -> Any:
     user = crud.user.get_by_email(db, email=user_in.email)
     if user:
@@ -61,7 +61,7 @@ def read_user(
     *,
     db: Session = Depends(get_db),
     user_id: str,
-    current_user: models.User = Depends(get_current_active_user),
+    current_user: models.user = Depends(get_current_active_user),
 ) -> Any:
     user = crud.user.get(db=db, id=user_id)
     if not user:
@@ -87,7 +87,7 @@ def update_user(
     db: Session = Depends(get_db),
     user_id: str,
     user_in: schemas.UserUpdate,
-    current_user: models.User = Depends(get_current_active_user),
+    current_user: models.user = Depends(get_current_active_user),
 ) -> Any:
     user = crud.user.get(db=db, id=user_id)
     if not user:
@@ -113,7 +113,7 @@ def delete_user(
     *,
     db: Session = Depends(get_db),
     user_id: str,
-    current_user: models.User = Depends(require_role(UserRole.ADMIN)),
+    current_user: models.user = Depends(require_role(UserRole.ADMIN)),
 ) -> Any:
     user = crud.user.get(db=db, id=user_id)
     if not user:

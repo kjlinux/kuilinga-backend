@@ -26,7 +26,7 @@ def read_attendances(
     employee_id: str = Query(None, description="Filtrer par ID d'employé"),
     skip: int = Query(0, description="Nombre de pointages à sauter"),
     limit: int = Query(100, description="Nombre maximum de pointages à retourner"),
-    current_user: models.User = Depends(get_current_active_user),
+    current_user: models.user = Depends(get_current_active_user),
 ) -> Any:
     if employee_id:
         employee = crud.employee.get(db, id=employee_id)
@@ -65,7 +65,7 @@ def create_attendance(
     *,
     db: Session = Depends(get_db),
     attendance_in: schemas.AttendanceCreate,
-    current_user: models.User = Depends(get_current_active_user),
+    current_user: models.user = Depends(get_current_active_user),
 ) -> Any:
     employee = crud.employee.get(db, id=attendance_in.employee_id)
     if not employee:
