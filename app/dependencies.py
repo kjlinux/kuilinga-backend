@@ -1,4 +1,4 @@
-from typing import Generator, Optional
+from typing import Generator, Optional, List, Set
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt
@@ -57,12 +57,30 @@ def get_current_active_superuser(
     return current_user
 
 
-def require_role(role: UserRole):
-    def role_checker(current_user: User = Depends(get_current_active_user)) -> User:
-        if current_user.role != role and not current_user.is_superuser:
+class PermissionChecker:
+    """
+    Dépendance qui vérifie si l'utilisateur possède les permissions requises.
+
+    S'utilise comme suit dans un endpoint :
+    `current_user: models.User = Depends(PermissionChecker(["permission:action"]))`
+    """
+
+    def __init__(self, required_permissions: List[str]):
+        self.required_permissions = set(required_permissions)
+
+    def __call__(self, user: User = Depends(get_current_active_user)) -> User:
+        user_permissions: Set[str] = set()
+        for role in user.roles:
+            for permission in role.permissions:
+                user_permissions.add(permission.name)
+
+        # Les super-utilisateurs ont toutes les permissions
+        if "superuser" in user_permissions or user.is_superuser:
+            return user
+
+        if not self.required_permissions.issubset(user_permissions):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="The user doesn't have enough privileges",
+                detail="Permissions insuffisantes pour effectuer cette action.",
             )
-        return current_user
-    return role_checker
+        return user

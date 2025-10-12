@@ -11,7 +11,7 @@ router = APIRouter()
     "/login",
     response_model=schemas.Token,
     summary="Connexion utilisateur",
-    description="Authentifie un utilisateur avec email et mot de passe, puis retourne un JWT.",
+    description="Authentifie un utilisateur et retourne les tokens JWT ainsi que les informations de l'utilisateur, y compris les rôles et permissions.",
     responses={
         401: {"description": "Email ou mot de passe incorrect"},
     },
@@ -19,19 +19,29 @@ router = APIRouter()
 def login_for_access_token(
     db: Session = Depends(get_db), form_data: OAuth2PasswordRequestForm = Depends()
 ):
-    user = security.authenticate_user(db, form_data.username, form_data.password)
+    """
+    Authentifie un utilisateur et retourne un objet Token complet.
+    - **username**: L'email de l'utilisateur.
+    - **password**: Le mot de passe de l'utilisateur.
+    """
+    user = security.authenticate_user(db, email=form_data.username, password=form_data.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Email ou mot de passe incorrect",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+    # Création des tokens
     access_token = security.create_access_token(data={"sub": user.id})
     refresh_token = security.create_refresh_token(data={"sub": user.id})
+
+    # Préparation de la réponse
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
         "token_type": "bearer",
+        "user": user,
     }
 
 @router.post(

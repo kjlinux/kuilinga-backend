@@ -1,5 +1,17 @@
 from fastapi import APIRouter
-from app.api.v1.endpoints import auth, users, employees, attendance, organizations, devices, reports
+from app.api.v1.endpoints import (
+    auth,
+    users,
+    employees,
+    attendance,
+    organizations,
+    devices,
+    reports,
+    departments,
+    roles,
+    permissions,
+    ws,
+)
 
 # Router principal v1
 api_router = APIRouter()
@@ -45,4 +57,28 @@ api_router.include_router(
     reports.router,
     prefix="/reports",
     tags=["Rapports"]
+)
+
+api_router.include_router(
+    departments.router,
+    prefix="/departments",
+    tags=["Départements"]
+)
+
+api_router.include_router(
+    roles.router,
+    prefix="/roles",
+    tags=["Rôles & Permissions"]
+)
+
+api_router.include_router(
+    permissions.router,
+    prefix="/permissions",
+    tags=["Rôles & Permissions"]
+)
+
+api_router.include_router(
+    ws.router,
+    prefix="",
+    tags=["WebSockets"]
 )
