@@ -97,6 +97,8 @@ def root():
 app.include_router(api_router, prefix=settings.API_V1_PREFIX)
 
 
+from app.services.mqtt_client import mqtt_client
+
 # Événement de démarrage
 @app.on_event("startup")
 async def startup_event():
@@ -106,6 +108,8 @@ async def startup_event():
     print(f"{settings.PROJECT_NAME} v{settings.VERSION} démarré")
     print(f"Documentation disponible sur: /docs")
     print(f"Mode Debug: {settings.DEBUG}")
+    # Démarrer le client MQTT
+    mqtt_client.start()
 
 
 # Événement d'arrêt
@@ -114,4 +118,6 @@ async def shutdown_event():
     """
     Actions à effectuer à l'arrêt de l'application
     """
+    # Arrêter le client MQTT
+    mqtt_client.stop()
     print(f"{settings.PROJECT_NAME} arrêté")

@@ -16,6 +16,13 @@ class Settings(BaseSettings):
     FIRST_SUPERUSER: str = "admin@example.com"
     FIRST_SUPERUSER_PASSWORD: str = "password"
 
+    # MQTT Broker Settings
+    MQTT_BROKER_HOST: str = "localhost"
+    MQTT_BROKER_PORT: int = 1883
+    MQTT_USERNAME: str | None = None
+    MQTT_PASSWORD: str | None = None
+    MQTT_TLS_ENABLED: bool = False
+
     class Config:
         case_sensitive = True
 

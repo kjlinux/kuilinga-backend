@@ -1,13 +1,8 @@
-import enum
-from sqlalchemy import Column, String, Boolean, Enum, ForeignKey
+from sqlalchemy import Column, String, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
 from .base import BaseModel
+from .role import user_roles
 
-class UserRole(str, enum.Enum):
-    ADMIN = "admin"
-    MANAGER = "manager"
-    EMPLOYEE = "employee"
-    INTEGRATOR = "integrator"
 
 class User(BaseModel):
     __tablename__ = "users"
@@ -16,7 +11,6 @@ class User(BaseModel):
     email = Column(String, unique=True, index=True, nullable=False)
     phone = Column(String, unique=True, index=True, nullable=True)
     hashed_password = Column(String, nullable=False)
-    role = Column(Enum(UserRole), nullable=False, default=UserRole.EMPLOYEE)
     is_active = Column(Boolean(), default=True)
     is_superuser = Column(Boolean(), default=False)
 
@@ -24,3 +18,4 @@ class User(BaseModel):
 
     organization = relationship("Organization", back_populates="users")
     employee = relationship("Employee", back_populates="user", uselist=False)
+    roles = relationship("Role", secondary=user_roles, back_populates="users")

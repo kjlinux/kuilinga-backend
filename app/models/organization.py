@@ -30,3 +30,4 @@ class Site(BaseModel):
 
     organization = relationship("Organization", back_populates="sites")
     employees = relationship("Employee", back_populates="site")
+    departments = relationship("Department", back_populates="site", cascade="all, delete-orphan")
