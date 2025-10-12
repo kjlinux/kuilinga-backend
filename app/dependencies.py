@@ -12,7 +12,7 @@ from app.crud.user import user as crud_user
 from app.models.user import User
 
 reusable_oauth2 = OAuth2PasswordBearer(
-    tokenUrl=f"{settings.API_V1_STR}/auth/access-token"
+    tokenUrl=f"{settings.API_V1_STR}/auth/login"
 )
 
 def get_db() -> Generator:
@@ -59,10 +59,7 @@ def get_current_active_superuser(
 
 class PermissionChecker:
     """
-    Dépendance qui vérifie si l'utilisateur possède les permissions requises.
-
-    S'utilise comme suit dans un endpoint :
-    `current_user: models.User = Depends(PermissionChecker(["permission:action"]))`
+    Dependency that checks if the user has the required permissions.
     """
 
     def __init__(self, required_permissions: List[str]):
@@ -74,8 +71,7 @@ class PermissionChecker:
             for permission in role.permissions:
                 user_permissions.add(permission.name)
 
-        # Les super-utilisateurs ont toutes les permissions
-        if "superuser" in user_permissions or user.is_superuser:
+        if user.is_superuser:
             return user
 
         if not self.required_permissions.issubset(user_permissions):
