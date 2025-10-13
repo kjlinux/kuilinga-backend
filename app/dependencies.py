@@ -5,11 +5,11 @@ from jose import jwt
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
-from app.core.config import settings
+from app.config import settings
 from app.db.session import SessionLocal
 from app.schemas.token import TokenPayload
 from app.crud.user import user as crud_user
-from app.models.user import User, UserRole
+from app.models.user import User
 
 reusable_oauth2 = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/auth/login"
@@ -80,3 +80,22 @@ class PermissionChecker:
                 detail="Permissions insuffisantes pour effectuer cette action.",
             )
         return user
+
+
+def require_role(required_role: str):
+    """
+    Dependency that checks if the user has the required role.
+    """
+
+    def role_checker(user: User = Depends(get_current_active_user)) -> User:
+        user_roles = {role.name for role in user.roles}
+
+        if user.is_superuser or required_role in user_roles:
+            return user
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Le rôle '{required_role}' est requis pour effectuer cette action.",
+            )
+
+    return role_checker

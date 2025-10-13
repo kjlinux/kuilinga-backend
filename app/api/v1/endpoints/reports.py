@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app import models, schemas
 from app.dependencies import get_db, require_role
-from app.models.user import UserRole
 
 router = APIRouter()
 
@@ -19,7 +18,7 @@ def generate_attendance_report(
     *,
     db: Session = Depends(get_db),
     report_in: schemas.ReportCreate,
-    current_user: models.user = Depends(require_role(UserRole.MANAGER)),
+    current_user: models.user = Depends(require_role("manager")),
 ):
     # NOTE: La logique de génération de rapport n'est pas implémentée.
     # Ceci est une réponse factice pour illustrer le fonctionnement de l'endpoint.

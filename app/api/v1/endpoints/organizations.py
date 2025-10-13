@@ -3,7 +3,6 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from app import crud, models, schemas
 from app.dependencies import get_db, get_current_active_user, require_role
-from app.models.user import UserRole
 
 router = APIRouter()
 
@@ -17,7 +16,7 @@ def read_organizations(
     db: Session = Depends(get_db),
     skip: int = Query(0, description="Nombre d'organisations à sauter"),
     limit: int = Query(100, description="Nombre maximum d'organisations à retourner"),
-    current_user: models.user = Depends(require_role(UserRole.ADMIN)),
+    current_user: models.user = Depends(require_role("admin")),
 ) -> Any:
     organizations = crud.organization.get_multi(db, skip=skip, limit=limit)
     return organizations
@@ -33,7 +32,7 @@ def create_organization(
     *,
     db: Session = Depends(get_db),
     organization_in: schemas.OrganizationCreate,
-    current_user: models.user = Depends(require_role(UserRole.ADMIN)),
+    current_user: models.user = Depends(require_role("admin")),
 ) -> Any:
     organization = crud.organization.create(db=db, obj_in=organization_in)
     return organization
@@ -77,7 +76,7 @@ def update_organization(
     db: Session = Depends(get_db),
     org_id: str,
     organization_in: schemas.OrganizationUpdate,
-    current_user: models.user = Depends(require_role(UserRole.ADMIN)),
+    current_user: models.user = Depends(require_role("admin")),
 ) -> Any:
     organization = crud.organization.get(db=db, id=org_id)
     if not organization:
@@ -99,7 +98,7 @@ def delete_organization(
     *,
     db: Session = Depends(get_db),
     org_id: str,
-    current_user: models.user = Depends(require_role(UserRole.ADMIN)),
+    current_user: models.user = Depends(require_role("admin")),
 ) -> Any:
     organization = crud.organization.get(db=db, id=org_id)
     if not organization:

@@ -7,10 +7,11 @@ class Settings(BaseSettings):
     """Configuration de l'application KUILINGA"""
     
     # Info application
-    PROJECT_NAME: str = "KUILINGA Backend"
-    VERSION: str = "1.0.0"
-    API_V1_PREFIX: str = "/api/v1"
-    DEBUG: bool = True
+    PROJECT_NAME: str
+    VERSION: str
+    API_V1_PREFIX: str
+    DEBUG: bool
+    API_V1_STR: str
     
     # Base de données
     DATABASE_URL: str = "postgresql://postgres:@127.0.0.1:5432/kuilinga_db"
@@ -53,6 +54,13 @@ class Settings(BaseSettings):
     # Rate Limiting
     RATE_LIMIT_PER_MINUTE: int = 60
     
+    # MQTT Broker Settings
+    MQTT_BROKER_HOST: str
+    MQTT_BROKER_PORT: int
+    MQTT_USERNAME: str | None
+    MQTT_PASSWORD: str | None
+    MQTT_TLS_ENABLED: bool
+
     class Config:
         env_file = ".env"
         case_sensitive = True

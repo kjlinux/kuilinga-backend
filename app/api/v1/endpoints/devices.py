@@ -3,7 +3,6 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from app import crud, models, schemas
 from app.dependencies import get_db, get_current_active_user, require_role
-from app.models.user import UserRole
 
 router = APIRouter()
 
@@ -17,7 +16,7 @@ def read_devices(
     db: Session = Depends(get_db),
     skip: int = Query(0, description="Nombre de terminaux à sauter"),
     limit: int = Query(100, description="Nombre maximum de terminaux à retourner"),
-    current_user: models.user = Depends(require_role(UserRole.MANAGER)),
+    current_user: models.user = Depends(require_role("manager")),
 ) -> Any:
     devices = crud.device.get_multi_by_organization(
         db, organization_id=current_user.organization_id, skip=skip, limit=limit
@@ -38,7 +37,7 @@ def create_device(
     *,
     db: Session = Depends(get_db),
     device_in: schemas.DeviceCreate,
-    current_user: models.user = Depends(require_role(UserRole.MANAGER)),
+    current_user: models.user = Depends(require_role("manager")),
 ) -> Any:
     if not current_user.is_superuser and current_user.organization_id != device_in.organization_id:
         raise HTTPException(
@@ -88,7 +87,7 @@ def update_device(
     db: Session = Depends(get_db),
     device_id: str,
     device_in: schemas.DeviceUpdate,
-    current_user: models.user = Depends(require_role(UserRole.MANAGER)),
+    current_user: models.user = Depends(require_role("manager")),
 ) -> Any:
     device = crud.device.get(db=db, id=device_id)
     if not device:
@@ -114,7 +113,7 @@ def delete_device(
     *,
     db: Session = Depends(get_db),
     device_id: str,
-    current_user: models.user = Depends(require_role(UserRole.ADMIN)),
+    current_user: models.user = Depends(require_role("admin")),
 ) -> Any:
     device = crud.device.get(db=db, id=device_id)
     if not device:

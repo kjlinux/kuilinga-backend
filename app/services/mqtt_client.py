@@ -61,8 +61,8 @@ class MQTTClient:
             with SessionLocal() as db:
                 device = crud_device.get_by_serial(db, serial_number=device_serial)
                 if not device:
-                logger.error(f"Device with serial '{device_serial}' not found.")
-                return
+                    logger.error(f"Device with serial '{device_serial}' not found.")
+                    return
 
             employee = crud_employee.get_by_badge(db, badge_id=payload.get("badge_id"))
             if not employee:

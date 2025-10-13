@@ -1,6 +1,7 @@
 from sqlalchemy import Column, String, JSON, ForeignKey
 from sqlalchemy.orm import relationship
 from .base import BaseModel
+from .leave import Leave
 
 
 class Employee(BaseModel):

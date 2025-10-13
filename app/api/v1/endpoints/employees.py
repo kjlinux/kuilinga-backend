@@ -3,7 +3,6 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from app import crud, models, schemas
 from app.dependencies import get_db, get_current_active_user, require_role
-from app.models.user import UserRole
 
 router = APIRouter()
 
@@ -41,7 +40,7 @@ def create_employee(
     *,
     db: Session = Depends(get_db),
     employee_in: schemas.EmployeeCreate,
-    current_user: models.user = Depends(require_role(UserRole.MANAGER)),
+    current_user: models.user = Depends(require_role("manager")),
 ) -> Any:
     if not current_user.is_superuser and current_user.organization_id != employee_in.organization_id:
         raise HTTPException(
@@ -91,7 +90,7 @@ def update_employee(
     db: Session = Depends(get_db),
     employee_id: str,
     employee_in: schemas.EmployeeUpdate,
-    current_user: models.user = Depends(require_role(UserRole.MANAGER)),
+    current_user: models.user = Depends(require_role("manager")),
 ) -> Any:
     employee = crud.employee.get(db=db, id=employee_id)
     if not employee:
@@ -117,7 +116,7 @@ def delete_employee(
     *,
     db: Session = Depends(get_db),
     employee_id: str,
-    current_user: models.user = Depends(require_role(UserRole.MANAGER)),
+    current_user: models.user = Depends(require_role("manager")),
 ) -> Any:
     employee = crud.employee.get(db=db, id=employee_id)
     if not employee:

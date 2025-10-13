@@ -11,7 +11,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 from sqlalchemy.orm import Session
 from app.db.session import SessionLocal, engine
 from app.db.base import Base
-from app.models.user import User, UserRole
+from app.models.user import User
 from app.models.organization import Organization
 from app.models.employee import Employee
 from app.models.attendance import Attendance
@@ -29,7 +29,6 @@ def init_db(db: Session) -> None:
             email="admin@kuilinga.com",
             hashed_password=get_password_hash("admin123"),
             full_name="Administrateur KUILINGA",
-            role=UserRole.ADMIN,
             is_active=True,
             is_superuser=True,
             phone="+225 0000000000"

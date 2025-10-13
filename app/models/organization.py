@@ -1,6 +1,7 @@
 from sqlalchemy import Column, String, Boolean, JSON, ForeignKey
 from sqlalchemy.orm import relationship
 from .base import BaseModel
+from .department import Department
 
 class Organization(BaseModel):
     __tablename__ = "organizations"
