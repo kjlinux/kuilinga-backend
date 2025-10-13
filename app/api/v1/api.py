@@ -11,6 +11,8 @@ from app.api.v1.endpoints import (
     roles,
     permissions,
     ws,
+    sites,
+    leaves,
 )
 
 # Router principal v1
@@ -81,4 +83,16 @@ api_router.include_router(
     ws.router,
     prefix="",
     tags=["WebSockets"]
+)
+
+api_router.include_router(
+    sites.router,
+    prefix="/sites",
+    tags=["Sites"]
+)
+
+api_router.include_router(
+    leaves.router,
+    prefix="/leaves",
+    tags=["Leaves"]
 )

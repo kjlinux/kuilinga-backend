@@ -109,3 +109,29 @@ def delete_user(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Utilisateur non trouvé")
     deleted_user = crud.user.remove(db=db, id=user_id)
     return deleted_user
+
+@router.post(
+    "/{user_id}/roles/{role_id}",
+    response_model=schemas.User,
+    summary="Assigner un rôle à un utilisateur",
+    dependencies=[Depends(PermissionChecker(["user:assign_role"]))],
+)
+def assign_role_to_user(
+    *,
+    db: Session = Depends(get_db),
+    user_id: str,
+    role_id: str,
+) -> Any:
+    """
+    Assign a role to a user.
+    """
+    user = crud.user.get(db=db, id=user_id)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Utilisateur non trouvé")
+
+    role = crud.role.get(db=db, id=role_id)
+    if not role:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Rôle non trouvé")
+
+    user = crud.user.assign_role(db=db, user=user, role=role)
+    return user

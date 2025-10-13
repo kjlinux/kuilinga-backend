@@ -19,3 +19,4 @@ class User(BaseModel):
     organization = relationship("Organization", back_populates="users")
     employee = relationship("Employee", back_populates="user", uselist=False)
     roles = relationship("Role", secondary=user_roles, back_populates="users")
+    approved_leaves = relationship("Leave", back_populates="approver")
