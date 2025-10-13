@@ -1,5 +1,5 @@
 import enum
-from sqlalchemy import Column, String, ForeignKey, DateTime, Enum, Text
+from sqlalchemy import Column, String, ForeignKey, Date, Enum
 from sqlalchemy.orm import relationship
 from .base import BaseModel
 
@@ -9,17 +9,27 @@ class LeaveStatus(str, enum.Enum):
     REJECTED = "rejected"
     CANCELLED = "cancelled"
 
+class LeaveType(str, enum.Enum):
+    ANNUAL = "annual"
+    SICK = "sick"
+    MATERNITY = "maternity"
+    PATERNITY = "paternity"
+    UNPAID = "unpaid"
+    OTHER = "other"
+
+
 class Leave(BaseModel):
     __tablename__ = "leaves"
 
-    start_date = Column(DateTime(timezone=True), nullable=False)
-    end_date = Column(DateTime(timezone=True), nullable=False)
-    status = Column(Enum(LeaveStatus), default=LeaveStatus.PENDING, nullable=False)
-    reason = Column(Text, nullable=True)
-    leave_type = Column(String, nullable=False, default="leave") # e.g., 'leave', 'absence', 'sick'
-
     employee_id = Column(String, ForeignKey("employees.id"), nullable=False)
-    approved_by_id = Column(String, ForeignKey("users.id"), nullable=True)
+    approver_id = Column(String, ForeignKey("users.id"), nullable=True)
+
+    leave_type = Column(Enum(LeaveType), nullable=False, default=LeaveType.OTHER)
+    start_date = Column(Date, nullable=False)
+    end_date = Column(Date, nullable=False)
+    reason = Column(String, nullable=False)
+    status = Column(Enum(LeaveStatus), nullable=False, default=LeaveStatus.PENDING)
+    notes = Column(String, nullable=True)
 
     employee = relationship("Employee", back_populates="leaves")
-    approved_by = relationship("User")
+    approver = relationship("User", back_populates="approved_leaves")

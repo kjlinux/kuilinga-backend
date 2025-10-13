@@ -1,7 +1,7 @@
-from sqlalchemy import Column, String, Boolean, JSON, ForeignKey
+from sqlalchemy import Column, String, Boolean, JSON
 from sqlalchemy.orm import relationship
 from .base import BaseModel
-from .department import Department
+from .site import Site
 
 class Organization(BaseModel):
     __tablename__ = "organizations"
@@ -19,16 +19,3 @@ class Organization(BaseModel):
     sites = relationship("Site", back_populates="organization", cascade="all, delete-orphan")
     employees = relationship("Employee", back_populates="organization", cascade="all, delete-orphan")
     devices = relationship("Device", back_populates="organization", cascade="all, delete-orphan")
-
-class Site(BaseModel):
-    __tablename__ = "sites"
-
-    name = Column(String, nullable=False)
-    address = Column(String, nullable=True)
-    timezone = Column(String, default="UTC")
-
-    organization_id = Column(String, ForeignKey("organizations.id"), nullable=False)
-
-    organization = relationship("Organization", back_populates="sites")
-    employees = relationship("Employee", back_populates="site")
-    departments = relationship("Department", back_populates="site", cascade="all, delete-orphan")

@@ -12,8 +12,9 @@ class PermissionBase(BaseModel):
 class PermissionCreate(PermissionBase):
     pass
 
-class PermissionUpdate(PermissionBase):
-    pass
+class PermissionUpdate(BaseModel):
+    name: str | None = None
+    description: str | None = None
 
 class Permission(PermissionBase):
     id: str
@@ -32,8 +33,9 @@ class RoleBase(BaseModel):
 class RoleCreate(RoleBase):
     pass
 
-class RoleUpdate(RoleBase):
-    pass
+class RoleUpdate(BaseModel):
+    name: str | None = None
+    description: str | None = None
 
 class Role(RoleBase):
     id: str
