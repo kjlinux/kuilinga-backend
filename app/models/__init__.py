@@ -1,5 +1,4 @@
 from .attendance import Attendance
-from .audit_log import AuditLog
 from .department import Department
 from .device import Device
 from .employee import Employee
