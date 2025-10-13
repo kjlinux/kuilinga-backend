@@ -3,7 +3,7 @@ import logging
 import asyncio
 import paho.mqtt.client as mqtt
 from sqlalchemy.orm import Session
-from app.core.config import settings
+from app.config import settings
 from app.crud import attendance as crud_attendance
 from app.crud import employee as crud_employee
 from app.crud import device as crud_device
