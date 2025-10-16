@@ -8,7 +8,7 @@ router = APIRouter()
 
 @router.get(
     "/",
-    response_model=List[schemas.Employee],
+    response_model=schemas.PaginatedResponse[schemas.Employee],
     summary="Lister les employés",
     description="Récupère une liste d'employés. Un admin voit tous les employés, un manager ne voit que ceux de son organisation.",
 )
@@ -19,12 +19,17 @@ def read_employees(
     current_user: models.user = Depends(get_current_active_user),
 ) -> Any:
     if current_user.is_superuser:
-        employees = crud.employee.get_multi(db, skip=skip, limit=limit)
+        employee_data = crud.employee.get_multi(db, skip=skip, limit=limit)
     else:
-        employees = crud.employee.get_multi_by_organization(
+        employee_data = crud.employee.get_multi_by_organization(
             db, organization_id=current_user.organization_id, skip=skip, limit=limit
         )
-    return employees
+    return {
+        "items": employee_data["items"],
+        "total": employee_data["total"],
+        "skip": skip,
+        "limit": limit,
+    }
 
 @router.post(
     "/",

@@ -19,17 +19,32 @@ def create_permission(*, db: Session = Depends(get_db), permission_in: schemas.P
     permission = crud.permission.create(db=db, obj_in=permission_in)
     return permission
 
+from fastapi import APIRouter, Depends, status, Query, HTTPException
+from sqlalchemy.orm import Session
+from typing import List, Any
+from app import crud, schemas
+from app.dependencies import get_db, PermissionChecker
+
 @router.get(
     "/",
-    response_model=List[schemas.Permission],
+    response_model=schemas.PaginatedResponse[schemas.Permission],
     dependencies=[Depends(PermissionChecker(["permission:read"]))],
 )
-def read_permissions(db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
+def read_permissions(
+    db: Session = Depends(get_db),
+    skip: int = Query(0, description="Nombre de permissions à sauter"),
+    limit: int = Query(100, description="Nombre maximum de permissions à retourner"),
+) -> Any:
     """
     Retrieve permissions. Requires permission: `permission:read`.
     """
-    permissions = crud.permission.get_multi(db, skip=skip, limit=limit)
-    return permissions
+    permission_data = crud.permission.get_multi(db, skip=skip, limit=limit)
+    return {
+        "items": permission_data["items"],
+        "total": permission_data["total"],
+        "skip": skip,
+        "limit": limit,
+    }
 
 @router.get(
     "/{permission_id}",

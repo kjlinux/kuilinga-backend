@@ -23,21 +23,32 @@ def create_site(
     site = crud.site.create(db=db, obj_in=site_in)
     return site
 
+from fastapi import APIRouter, Depends, HTTPException, status, Query
+from sqlalchemy.orm import Session
+from typing import List, Any
+from app import crud, models, schemas
+from app.dependencies import get_db, PermissionChecker
+
 @router.get(
     "/",
-    response_model=List[schemas.Site],
+    response_model=schemas.PaginatedResponse[schemas.Site],
     dependencies=[Depends(PermissionChecker(["site:read"]))],
 )
 def read_sites(
     db: Session = Depends(get_db),
-    skip: int = 0,
-    limit: int = 100,
-):
+    skip: int = Query(0, description="Nombre de sites à sauter"),
+    limit: int = Query(100, description="Nombre maximum de sites à retourner"),
+) -> Any:
     """
     Retrieve sites. Requires permission: `site:read`.
     """
-    sites = crud.site.get_multi(db, skip=skip, limit=limit)
-    return sites
+    site_data = crud.site.get_multi(db, skip=skip, limit=limit)
+    return {
+        "items": site_data["items"],
+        "total": site_data["total"],
+        "skip": skip,
+        "limit": limit,
+    }
 
 @router.get(
     "/{site_id}",
