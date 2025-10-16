@@ -1,6 +1,5 @@
 from typing import Any, Dict, Optional, Union
 from sqlalchemy.orm import Session
-from app.core.security import get_password_hash
 from app.crud.base import CRUDBase
 from app.models.user import User
 from app.models.role import Role
@@ -11,6 +10,7 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
         return db.query(self.model).filter(User.email == email).first()
 
     def create(self, db: Session, *, obj_in: UserCreate) -> User:
+        from app.core.security import get_password_hash
         create_data = obj_in.model_dump()
         create_data.pop("password")
         db_obj = self.model(**create_data)
@@ -23,6 +23,7 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
     def update(
         self, db: Session, *, db_obj: User, obj_in: Union[UserUpdate, Dict[str, Any]]
     ) -> User:
+        from app.core.security import get_password_hash
         if isinstance(obj_in, dict):
             update_data = obj_in
         else:

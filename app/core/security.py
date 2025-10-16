@@ -1,7 +1,11 @@
 from datetime import datetime, timedelta, timezone
 from typing import Optional
+
 from jose import JWTError, jwt
 from passlib.context import CryptContext
+from sqlalchemy.orm import Session
+
+from app import crud, models
 from app.config import settings
 
 # Configuration du hashing de mots de passe
@@ -76,3 +80,23 @@ def decode_token(token: str) -> dict:
         return payload
     except JWTError:
         raise JWTError("Token invalide ou expiré")
+
+
+def authenticate_user(db: Session, email: str, password: str) -> Optional[models.User]:
+    """
+    Authentifie un utilisateur.
+
+    Args:
+        db: Session de la base de données.
+        email: Email de l'utilisateur.
+        password: Mot de passe de l'utilisateur.
+
+    Returns:
+        L'objet utilisateur si l'authentification réussit, sinon None.
+    """
+    user = crud.user.get_by_email(db, email=email)
+    if not user:
+        return None
+    if not verify_password(password, user.hashed_password):
+        return None
+    return user
