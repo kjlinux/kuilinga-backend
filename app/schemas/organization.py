@@ -1,34 +1,36 @@
 from pydantic import BaseModel, Field
-from typing import Optional, Any, List
-from .site import Site
+from typing import Optional, Any
 
-# Schéma pour l'organisation
+# Schéma de base pour l'organisation
 class OrganizationBase(BaseModel):
     name: str = Field(..., example="Tanga Group")
-    industry: Optional[str] = Field(None, example="Société de technologie")
-    contact_email: Optional[str] = Field(None, example="contact@tangagroup.com")
-    phone_number: Optional[str] = Field(None, example="+225 0102030405")
+    description: Optional[str] = Field(None, example="Société de technologie")
+    email: Optional[str] = Field(None, example="contact@tangagroup.com")
+    phone: Optional[str] = Field(None, example="+225 0102030405")
     timezone: str = Field("Africa/Abidjan", example="Africa/Abidjan")
-    subscription_plan: str = Field("standard", example="premium")
+    plan: Optional[str] = Field("standard", example="premium")
     is_active: bool = True
-    settings: Optional[dict[str, Any]] = Field({}, example={"enable_geo_fencing": False})
 
+# Schéma pour la création d'une organisation
 class OrganizationCreate(OrganizationBase):
     pass
 
+# Schéma pour la mise à jour d'une organisation
 class OrganizationUpdate(BaseModel):
     name: Optional[str] = None
-    industry: Optional[str] = None
-    contact_email: Optional[str] = None
-    phone_number: Optional[str] = None
+    description: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
     timezone: Optional[str] = None
-    subscription_plan: Optional[str] = None
+    plan: Optional[str] = None
     is_active: Optional[bool] = None
-    settings: Optional[dict[str, Any]] = None
 
+# Schéma complet pour retourner via l'API
 class Organization(OrganizationBase):
     id: str
-    sites: List[Site] = []
+    sites_count: int = 0
+    employees_count: int = 0
+    users_count: int = 0
 
     class Config:
         from_attributes = True

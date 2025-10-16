@@ -46,4 +46,7 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
         db.refresh(user)
         return user
 
+    def count_by_organization(self, db: Session, *, organization_id: str) -> int:
+        return db.query(self.model).filter(User.organization_id == organization_id).count()
+
 user = CRUDUser(User)

@@ -1,10 +1,23 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
-from typing import List
+from typing import Any
 from app import crud, models, schemas
 from app.dependencies import get_db, PermissionChecker
 
 router = APIRouter()
+
+def enrich_site_response(db: Session, site: models.Site) -> schemas.Site:
+    """
+    Enrich the site object with organization details and calculated counts.
+    """
+    site_schema = schemas.Site.from_orm(site)
+
+    # Get counts
+    site_schema.departments_count = crud.department.count_by_site(db, site_id=site.id)
+    site_schema.employees_count = crud.employee.count_by_site(db, site_id=site.id)
+    site_schema.devices_count = crud.device.count_by_site(db, site_id=site.id)
+
+    return site_schema
 
 @router.post(
     "/",
@@ -17,17 +30,8 @@ def create_site(
     db: Session = Depends(get_db),
     site_in: schemas.SiteCreate,
 ):
-    """
-    Create a new site. Requires permission: `site:create`.
-    """
-    site = crud.site.create(db=db, obj_in=site_in)
-    return site
-
-from fastapi import APIRouter, Depends, HTTPException, status, Query
-from sqlalchemy.orm import Session
-from typing import List, Any
-from app import crud, models, schemas
-from app.dependencies import get_db, PermissionChecker
+    site = crud.site.create_with_organization(db=db, obj_in=site_in)
+    return enrich_site_response(db, site)
 
 @router.get(
     "/",
@@ -39,12 +43,12 @@ def read_sites(
     skip: int = Query(0, description="Nombre de sites à sauter"),
     limit: int = Query(100, description="Nombre maximum de sites à retourner"),
 ) -> Any:
-    """
-    Retrieve sites. Requires permission: `site:read`.
-    """
-    site_data = crud.site.get_multi(db, skip=skip, limit=limit)
+    site_data = crud.site.get_multi_paginated(db, skip=skip, limit=limit)
+
+    enriched_items = [enrich_site_response(db, site) for site in site_data["items"]]
+
     return {
-        "items": site_data["items"],
+        "items": enriched_items,
         "total": site_data["total"],
         "skip": skip,
         "limit": limit,
@@ -60,13 +64,10 @@ def read_site(
     db: Session = Depends(get_db),
     site_id: str,
 ):
-    """
-    Get site by ID. Requires permission: `site:read`.
-    """
     site = crud.site.get(db=db, id=site_id)
     if not site:
         raise HTTPException(status_code=404, detail="Site not found")
-    return site
+    return enrich_site_response(db, site)
 
 @router.put(
     "/{site_id}",
@@ -79,14 +80,11 @@ def update_site(
     site_id: str,
     site_in: schemas.SiteUpdate,
 ):
-    """
-    Update a site. Requires permission: `site:update`.
-    """
     site = crud.site.get(db=db, id=site_id)
     if not site:
         raise HTTPException(status_code=404, detail="Site not found")
     site = crud.site.update(db=db, db_obj=site, obj_in=site_in)
-    return site
+    return enrich_site_response(db, site)
 
 @router.delete(
     "/{site_id}",
@@ -98,11 +96,8 @@ def delete_site(
     db: Session = Depends(get_db),
     site_id: str,
 ):
-    """
-    Delete a site. Requires permission: `site:delete`.
-    """
     site = crud.site.get(db=db, id=site_id)
     if not site:
         raise HTTPException(status_code=404, detail="Site not found")
     site = crud.site.remove(db=db, id=site_id)
-    return site
+    return enrich_site_response(db, site)
