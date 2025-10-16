@@ -2,7 +2,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from app import crud, models, schemas
-from app.dependencies import get_db, get_current_active_user, require_role
+from app.dependencies import get_db, get_current_active_user, require_role, PermissionChecker
 
 router = APIRouter()
 
