@@ -17,8 +17,11 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
 
     def get_multi(
         self, db: Session, *, skip: int = 0, limit: int = 100
-    ) -> List[ModelType]:
-        return db.query(self.model).order_by(self.model.id).offset(skip).limit(limit).all()
+    ) -> Dict[str, Any]:
+        query = db.query(self.model)
+        total = query.count()
+        items = query.order_by(self.model.id).offset(skip).limit(limit).all()
+        return {"items": items, "total": total}
 
     def create(self, db: Session, *, obj_in: CreateSchemaType) -> ModelType:
         obj_in_data = jsonable_encoder(obj_in)

@@ -8,7 +8,7 @@ router = APIRouter()
 
 @router.get(
     "/",
-    response_model=List[schemas.Organization],
+    response_model=schemas.PaginatedResponse[schemas.Organization],
     summary="Lister toutes les organisations",
     description="Récupère une liste paginée de toutes les organisations. **Requiert le rôle 'admin'.**",
 )
@@ -18,8 +18,13 @@ def read_organizations(
     limit: int = Query(100, description="Nombre maximum d'organisations à retourner"),
     current_user: models.user = Depends(require_role("admin")),
 ) -> Any:
-    organizations = crud.organization.get_multi(db, skip=skip, limit=limit)
-    return organizations
+    organization_data = crud.organization.get_multi(db, skip=skip, limit=limit)
+    return {
+        "items": organization_data["items"],
+        "total": organization_data["total"],
+        "skip": skip,
+        "limit": limit,
+    }
 
 @router.post(
     "/",

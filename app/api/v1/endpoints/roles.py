@@ -19,17 +19,32 @@ def create_role(*, db: Session = Depends(get_db), role_in: schemas.RoleCreate):
     role = crud.role.create(db=db, obj_in=role_in)
     return role
 
+from fastapi import APIRouter, Depends, HTTPException, status, Query
+from sqlalchemy.orm import Session
+from typing import List, Any
+from app import crud, models, schemas
+from app.dependencies import get_db, PermissionChecker
+
 @router.get(
     "/",
-    response_model=List[schemas.Role],
+    response_model=schemas.PaginatedResponse[schemas.Role],
     dependencies=[Depends(PermissionChecker(["role:read"]))],
 )
-def read_roles(db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
+def read_roles(
+    db: Session = Depends(get_db),
+    skip: int = Query(0, description="Nombre de rôles à sauter"),
+    limit: int = Query(100, description="Nombre maximum de rôles à retourner"),
+) -> Any:
     """
     Retrieve roles. Requires permission: `role:read`.
     """
-    roles = crud.role.get_multi(db, skip=skip, limit=limit)
-    return roles
+    role_data = crud.role.get_multi(db, skip=skip, limit=limit)
+    return {
+        "items": role_data["items"],
+        "total": role_data["total"],
+        "skip": skip,
+        "limit": limit,
+    }
 
 @router.post(
     "/{role_id}/permissions/{permission_id}",

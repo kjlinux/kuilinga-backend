@@ -31,21 +31,32 @@ def create_leave(
     leave = crud.leave.create(db=db, obj_in=leave_in)
     return leave
 
+from fastapi import APIRouter, Depends, HTTPException, status, Query
+from sqlalchemy.orm import Session
+from typing import List, Any
+from app import crud, models, schemas
+from app.dependencies import get_db, PermissionChecker, get_current_active_user
+
 @router.get(
     "/",
-    response_model=List[schemas.Leave],
+    response_model=schemas.PaginatedResponse[schemas.Leave],
     dependencies=[Depends(PermissionChecker(["leave:read"]))],
 )
 def read_leaves(
     db: Session = Depends(get_db),
-    skip: int = 0,
-    limit: int = 100,
-):
+    skip: int = Query(0, description="Nombre de demandes de congé à sauter"),
+    limit: int = Query(100, description="Nombre maximum de demandes de congé à retourner"),
+) -> Any:
     """
     Retrieve leave requests. Requires permission: `leave:read`.
     """
-    leaves = crud.leave.get_multi(db, skip=skip, limit=limit)
-    return leaves
+    leave_data = crud.leave.get_multi(db, skip=skip, limit=limit)
+    return {
+        "items": leave_data["items"],
+        "total": leave_data["total"],
+        "skip": skip,
+        "limit": limit,
+    }
 
 @router.get(
     "/{leave_id}",

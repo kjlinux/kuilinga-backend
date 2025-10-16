@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from typing import Any
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
-from typing import List
 from app import crud, models, schemas
 from app.dependencies import get_db, PermissionChecker
 
@@ -25,19 +25,24 @@ def create_department(
 
 @router.get(
     "/",
-    response_model=List[schemas.Department],
+    response_model=schemas.PaginatedResponse[schemas.Department],
     dependencies=[Depends(PermissionChecker(["department:read"]))],
 )
 def read_departments(
     db: Session = Depends(get_db),
-    skip: int = 0,
-    limit: int = 100,
-):
+    skip: int = Query(0, description="Nombre de départements à sauter"),
+    limit: int = Query(100, description="Nombre maximum de départements à retourner"),
+) -> Any:
     """
     Retrieve departments. Requires permission: `department:read`.
     """
-    departments = crud.department.get_multi(db, skip=skip, limit=limit)
-    return departments
+    department_data = crud.department.get_multi(db, skip=skip, limit=limit)
+    return {
+        "items": department_data["items"],
+        "total": department_data["total"],
+        "skip": skip,
+        "limit": limit,
+    }
 
 @router.get(
     "/{department_id}",

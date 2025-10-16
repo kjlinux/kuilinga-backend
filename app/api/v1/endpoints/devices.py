@@ -8,7 +8,7 @@ router = APIRouter()
 
 @router.get(
     "/",
-    response_model=List[schemas.Device],
+    response_model=schemas.PaginatedResponse[schemas.Device],
     summary="Lister les terminaux de l'organisation",
     description="Récupère une liste de terminaux pour l'organisation de l'utilisateur. **Requiert le rôle 'manager'.**",
 )
@@ -18,10 +18,15 @@ def read_devices(
     limit: int = Query(100, description="Nombre maximum de terminaux à retourner"),
     current_user: models.user = Depends(require_role("manager")),
 ) -> Any:
-    devices = crud.device.get_multi_by_organization(
+    device_data = crud.device.get_multi_by_organization(
         db, organization_id=current_user.organization_id, skip=skip, limit=limit
     )
-    return devices
+    return {
+        "items": device_data["items"],
+        "total": device_data["total"],
+        "skip": skip,
+        "limit": limit,
+    }
 
 @router.post(
     "/",

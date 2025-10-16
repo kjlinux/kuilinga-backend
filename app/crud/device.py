@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session
 from app.crud.base import CRUDBase
 from app.models.device import Device
@@ -10,13 +10,10 @@ class CRUDDevice(CRUDBase[Device, DeviceCreate, DeviceUpdate]):
 
     def get_multi_by_organization(
         self, db: Session, *, organization_id: str, skip: int = 0, limit: int = 100
-    ) -> List[Device]:
-        return (
-            db.query(self.model)
-            .filter(Device.organization_id == organization_id)
-            .offset(skip)
-            .limit(limit)
-            .all()
-        )
+    ) -> Dict[str, Any]:
+        query = db.query(self.model).filter(Device.organization_id == organization_id)
+        total = query.count()
+        items = query.offset(skip).limit(limit).all()
+        return {"items": items, "total": total}
 
 device = CRUDDevice(Device)

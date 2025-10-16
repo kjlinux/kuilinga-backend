@@ -8,7 +8,7 @@ router = APIRouter()
 
 @router.get(
     "/",
-    response_model=List[schemas.User],
+    response_model=schemas.PaginatedResponse[schemas.User],
     summary="Lister tous les utilisateurs",
     description="Récupère une liste paginée de tous les utilisateurs. **Requiert la permission 'user:read'.**",
     dependencies=[Depends(PermissionChecker(["user:read"]))],
@@ -21,8 +21,13 @@ def read_users(
     """
     Retrieve users.
     """
-    users = crud.user.get_multi(db, skip=skip, limit=limit)
-    return users
+    user_data = crud.user.get_multi(db, skip=skip, limit=limit)
+    return {
+        "items": user_data["items"],
+        "total": user_data["total"],
+        "skip": skip,
+        "limit": limit,
+    }
 
 @router.post(
     "/",
