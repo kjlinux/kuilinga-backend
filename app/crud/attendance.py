@@ -45,6 +45,14 @@ class CRUDAttendance(CRUDBase[Attendance, AttendanceCreate, AttendanceUpdate]):
     ) -> Dict[str, Any]:
         return self.get_multi_paginated(db, skip=skip, limit=limit, employee_id=employee_id)
 
+    def get_last_for_employee(self, db: Session, *, employee_id: str) -> Optional[Attendance]:
+        return (
+            db.query(self.model)
+            .filter(Attendance.employee_id == employee_id)
+            .order_by(Attendance.timestamp.desc())
+            .first()
+        )
+
     def get_last_for_device(self, db: Session, *, device_id: str) -> Optional[Attendance]:
         return (
             db.query(self.model)

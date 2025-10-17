@@ -12,16 +12,18 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data/
 
-  mqtt:
-    image: eclipse-mosquitto:2.0
+  hivemq:
+    image: hivemq/hivemq-ce:latest
     ports:
       - "1883:1883"
-      - "9001:9001"
+      - "8888:8080" # HiveMQ Control Center
     volumes:
-      - mosquitto_data:/mosquitto/data
-      - mosquitto_log:/mosquitto/log
+      - hivemq_data:/opt/hivemq/data
+      - hivemq_extensions:/opt/hivemq/extensions
+      - hivemq_log:/opt/hivemq/log
 
 volumes:
   postgres_data:
-  mosquitto_data:
-  mosquitto_log:
+  hivemq_data:
+  hivemq_extensions:
+  hivemq_log:
