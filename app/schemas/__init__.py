@@ -3,7 +3,46 @@ from .department import Department, DepartmentCreate, DepartmentUpdate
 from .device import Device, DeviceCreate, DeviceUpdate
 from .employee import Employee, EmployeeCreate, EmployeeUpdate
 from .organization import Organization, OrganizationCreate, OrganizationUpdate
-from .report import AttendanceReport as Report, ReportRequest as ReportCreate
+from .report import (
+    ReportFormat,
+    ReportPeriod,
+    ReportRequest,
+    AttendanceReportRow,
+    AttendanceReport,
+    EmployeeDetailReport,
+    EmployeePresenceReportRequest,
+    EmployeePresenceReportRow,
+    EmployeePresenceReportResponse,
+    EmployeeMonthlySummaryRequest,
+    EmployeeMonthlySummaryResponse,
+    EmployeeLeavesReportRequest,
+    EmployeeLeaveReportRow,
+    EmployeeLeavesReportResponse,
+    PresenceCertificateRequest,
+    DepartmentPresenceRequest,
+    DepartmentPresenceReportRow,
+    DepartmentPresenceResponse,
+    TeamWeeklyReportRequest,
+    DepartmentLeavesRequest,
+    DepartmentLeaveReportRow,
+    DepartmentLeavesResponse,
+    TeamPerformanceRequest,
+    TeamPerformanceRow,
+    TeamPerformanceResponse,
+    OrganizationPresenceRequest,
+    OrganizationPresenceResponse,
+    MonthlySyntheticReportRequest,
+    OrganizationLeavesRequest,
+    WorkedHoursRequest,
+    WorkedHoursRow,
+    WorkedHoursResponse,
+    SiteActivityRequest,
+    SiteActivityRow,
+    SiteActivityResponse,
+    MultiOrgConsolidatedRequest,
+    MultiOrgConsolidatedRow,
+    MultiOrgConsolidatedResponse,
+)
 from .role import Role, RoleCreate, RoleUpdate, Permission, PermissionCreate, PermissionUpdate
 from .shift import Shift, ShiftCreate, ShiftUpdate
 from .token import Token, TokenPayload, RefreshTokenRequest
