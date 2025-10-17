@@ -2,8 +2,10 @@ import json
 from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
-from app import crud, schemas
-from app.dependencies import get_db, PermissionChecker
+from datetime import datetime
+from app import crud, models, schemas
+from app.dependencies import get_db, PermissionChecker, get_current_active_user
+from app.models.attendance import AttendanceType
 from app.websocket.connection_manager import manager
 
 router = APIRouter()
@@ -72,5 +74,54 @@ async def create_attendance(
           "payload": attendance_data
       }
       await manager.broadcast(json.dumps(message_to_broadcast, default=str))
+
+    return enriched_attendance
+
+
+@router.post(
+    "/clock",
+    response_model=schemas.Attendance,
+    summary="Pointage manuel (Clock-in/Clock-out)",
+    description="Permet à un utilisateur authentifié de pointer son arrivée ou son départ. Le système détermine automatiquement s'il s'agit d'une entrée ou d'une sortie.",
+)
+async def manual_clock(
+    *,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_active_user),
+) -> Any:
+    """
+    Handles a manual clock-in or clock-out for the authenticated user.
+    """
+    if not current_user.employee:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="L'utilisateur n'est pas associé à un profil employé.",
+        )
+
+    employee_id = current_user.employee.id
+    last_attendance = crud.attendance.get_last_for_employee(db, employee_id=employee_id)
+
+    new_attendance_type = AttendanceType.IN
+    if last_attendance and last_attendance.type == AttendanceType.IN:
+        new_attendance_type = AttendanceType.OUT
+
+    attendance_in = schemas.AttendanceCreate(
+        timestamp=datetime.utcnow(),
+        type=new_attendance_type,
+        employee_id=employee_id,
+        device_id=None,  # Manual entry has no device
+    )
+
+    attendance = crud.attendance.create(db=db, obj_in=attendance_in)
+    db.refresh(attendance)
+
+    enriched_attendance = crud.attendance.get(db, id=attendance.id)
+    if enriched_attendance:
+        attendance_data = schemas.Attendance.from_orm(enriched_attendance).dict()
+        message_to_broadcast = {
+            "type": "new_attendance",
+            "payload": attendance_data
+        }
+        await manager.broadcast(json.dumps(message_to_broadcast, default=str))
 
     return enriched_attendance
