@@ -11,3 +11,4 @@ from .user import User, UserCreate, UserUpdate
 from .site import Site, SiteCreate, SiteUpdate
 from .leave import Leave, LeaveCreate, LeaveUpdate
 from .paginated_response import PaginatedResponse
+from . import dashboard

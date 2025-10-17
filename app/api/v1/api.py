@@ -13,6 +13,7 @@ from app.api.v1.endpoints import (
     ws,
     sites,
     leaves,
+    dashboard,
 )
 
 # Router principal v1
@@ -95,4 +96,10 @@ api_router.include_router(
     leaves.router,
     prefix="/leaves",
     tags=["Leaves"]
+)
+
+api_router.include_router(
+    dashboard.router,
+    prefix="/dashboard",
+    tags=["Dashboard"]
 )
