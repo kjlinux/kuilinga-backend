@@ -9,3 +9,6 @@ passlib[bcrypt]
 python-multipart
 paho-mqtt
 pydantic-settings
+weasyprint
+pandas
+openpyxl

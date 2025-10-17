@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ report_title }}</title>
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 1.5cm;
+        }
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            color: #333;
+            font-size: 10px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #005a9e;
+            padding-bottom: 10px;
+        }
+        .header h1 {
+            margin: 0;
+            color: #005a9e;
+            font-size: 22px;
+        }
+        .report-info {
+            margin-bottom: 20px;
+        }
+        .summary {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f0f8ff;
+        }
+        .summary h2 {
+            margin-top: 0;
+            color: #005a9e;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 7px;
+            text-align: left;
+        }
+        th {
+            background-color: #005a9e;
+            color: white;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        .footer {
+            position: fixed;
+            bottom: -1cm;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 9px;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div class="footer">
+        KUILINGA Presence Management - Rapport généré le {{ now().strftime('%d/%m/%Y %H:%M') }}
+    </div>
+
+    <div class="header">
+        <h1>{{ report_title }}</h1>
+    </div>
+
+    <div class="report-info">
+        <p><strong>Organisation :</strong> {{ organization_name }}</p>
+        <p><strong>Période :</strong> {{ period }}</p>
+    </div>
+
+    <div class="summary">
+        <h2>Synthèse Globale</h2>
+        <p><strong>Nombre total d'employés considérés :</strong> {{ summary.total_employees }}</p>
+        <p><strong>Total des jours de présence :</strong> {{ summary.total_present_days }}</p>
+        <p><strong>Total des jours d'absence :</strong> {{ summary.total_absent_days }}</p>
+        <p><strong>Total des jours de congé :</strong> {{ summary.total_on_leave_days }}</p>
+        <p><strong>Total des heures travaillées :</strong> {{ '%.2f'|format(summary.total_hours_worked) }}h</p>
+    </div>
+
+    <h2>Détail par Employé</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Nom de l'Employé</th>
+                <th>Département</th>
+                <th>Jours Présents</th>
+                <th>Jours Absents</th>
+                <th>Jours en Congé</th>
+                <th>Heures Travaillées</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in data %}
+            <tr>
+                <td>{{ row.employee_name }}</td>
+                <td>{{ row.department_name }}</td>
+                <td>{{ row.present_days }}</td>
+                <td>{{ row.absent_days }}</td>
+                <td>{{ row.on_leave_days }}</td>
+                <td>{{ '%.2f'|format(row.total_hours_worked) }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" style="text-align: center;">Aucune donnée trouvée pour la période et les filtres sélectionnés.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</body>
+</html>

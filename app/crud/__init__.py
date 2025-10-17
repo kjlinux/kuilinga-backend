@@ -9,3 +9,4 @@ from .user import user
 from .crud_site import site
 from .crud_leave import leave
 from .crud_dashboard import dashboard
+from .crud_report import report

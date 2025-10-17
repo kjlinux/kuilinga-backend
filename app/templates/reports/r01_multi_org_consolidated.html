@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ report_title }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1.5cm;
+        }
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            color: #333;
+            font-size: 11px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #8B0000; /* Dark Red for Super Admin */
+            padding-bottom: 10px;
+        }
+        .header h1 {
+            margin: 0;
+            color: #8B0000;
+            font-size: 24px;
+        }
+        .report-info {
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #8B0000;
+            color: white;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        .footer {
+            position: fixed;
+            bottom: -1cm;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 9px;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div class="footer">
+        KUILINGA Presence Management (Super Admin View) - Rapport généré le {{ now().strftime('%d/%m/%Y %H:%M') }}
+    </div>
+
+    <div class="header">
+        <h1>{{ report_title }}</h1>
+    </div>
+
+    <div class="report-info">
+        <p><strong>Période :</strong> {{ period }}</p>
+    </div>
+
+    <h2>Données consolidées par Organisation</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Organisation</th>
+                <th>Total Jours de Présence</th>
+                <th>Total Jours de Congé</th>
+                <th>Total Heures Travaillées</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in data %}
+            <tr>
+                <td>{{ row.organization_name }}</td>
+                <td>{{ row.present_days }}</td>
+                <td>{{ row.on_leave_days }}</td>
+                <td>{{ '%.2f'|format(row.total_hours_worked) }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="4" style="text-align: center;">Aucune donnée trouvée pour les organisations sélectionnées.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</body>
+</html>

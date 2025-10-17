@@ -99,3 +99,38 @@ def require_role(required_role: str):
             )
 
     return role_checker
+
+
+from app.models.employee import Employee
+
+def get_current_active_employee(
+    current_user: User = Depends(get_current_active_user),
+) -> Employee:
+    if not current_user.employee:
+        raise HTTPException(
+            status_code=403, detail="Access forbidden: User is not an employee."
+        )
+    return current_user.employee
+
+
+def get_current_active_manager(
+    current_user: User = Depends(get_current_active_user),
+) -> Employee:
+    """
+    Checks if the user has the 'manager' role and is an employee.
+    Returns the Employee object with department information.
+    """
+    user_roles = {role.name for role in current_user.roles}
+    if "manager" not in user_roles and not current_user.is_superuser:
+        raise HTTPException(
+            status_code=403,
+            detail="Access forbidden: Manager role required.",
+        )
+
+    if not current_user.employee or not current_user.employee.department_id:
+        raise HTTPException(
+            status_code=403,
+            detail="Access forbidden: Manager is not associated with a department.",
+        )
+
+    return current_user.employee

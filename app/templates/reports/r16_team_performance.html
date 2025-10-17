@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ report_title }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1.5cm;
+        }
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            color: #333;
+            font-size: 11px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #005a9e;
+            padding-bottom: 10px;
+        }
+        .header h1 {
+            margin: 0;
+            color: #005a9e;
+            font-size: 24px;
+        }
+        .report-info {
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #005a9e;
+            color: white;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        .footer {
+            position: fixed;
+            bottom: -1cm;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 9px;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div class="footer">
+        KUILINGA Presence Management - Rapport généré le {{ now().strftime('%d/%m/%Y %H:%M') }}
+    </div>
+
+    <div class="header">
+        <h1>{{ report_title }}</h1>
+    </div>
+
+    <div class="report-info">
+        <p><strong>Département :</strong> {{ department_name }}</p>
+        <p><strong>Période :</strong> {{ period }}</p>
+    </div>
+
+    <h2>Indicateurs de Performance</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Nom de l'Employé</th>
+                <th>Taux de Présence (%)</th>
+                <th>Total Heures Travaillées</th>
+                <th>Performance Ponctualité</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in data %}
+            <tr>
+                <td>{{ row.employee_name }}</td>
+                <td>{{ '%.2f'|format(row.attendance_rate) }}%</td>
+                <td>{{ '%.2f'|format(row.total_hours_worked) }}</td>
+                <td><em>N/A</em></td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="4" style="text-align: center;">Aucune donnée de performance pour la période sélectionnée.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <p><em>Note : L'indicateur de ponctualité sera disponible dans une future mise à jour.</em></p>
+
+</body>
+</html>

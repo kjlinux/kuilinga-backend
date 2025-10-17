@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ report_title }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1.5cm;
+        }
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            color: #333;
+            font-size: 11px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #005a9e;
+            padding-bottom: 10px;
+        }
+        .header h1 {
+            margin: 0;
+            color: #005a9e;
+            font-size: 24px;
+        }
+        .employee-info {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .employee-info p {
+            margin: 5px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #005a9e;
+            color: white;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        .summary {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f0f8ff;
+            width: 50%;
+        }
+        .summary h2 {
+            margin-top: 0;
+            color: #005a9e;
+        }
+        .footer {
+            position: fixed;
+            bottom: -1cm;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 9px;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div class="footer">
+        KUILINGA Presence Management - Rapport généré le {{ now().strftime('%d/%m/%Y %H:%M') }} - Page <pdf:page-number />
+    </div>
+
+    <div class="header">
+        <h1>{{ report_title }}</h1>
+    </div>
+
+    <div class="employee-info">
+        <p><strong>Employé :</strong> {{ employee_name }}</p>
+        <p><strong>Matricule :</strong> {{ employee_badge_id }}</p>
+        <p><strong>Département :</strong> {{ department_name }}</p>
+        <p><strong>Période :</strong> {{ period }}</p>
+    </div>
+
+    <h2>Détail des Pointages</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Heure d'Arrivée</th>
+                <th>Heure de Départ</th>
+                <th>Heures Travaillées</th>
+                <th>Statut</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in data %}
+            <tr>
+                <td>{{ row.date.strftime('%d/%m/%Y') }}</td>
+                <td>{{ row.check_in or 'N/A' }}</td>
+                <td>{{ row.check_out or 'N/A' }}</td>
+                <td>{{ '%.2f'|format(row.total_hours) if row.total_hours else 'N/A' }}</td>
+                <td>{{ row.status }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="summary">
+        <h2>Résumé</h2>
+        <p><strong>Jours de présence :</strong> {{ summary.present_days }}</p>
+        <p><strong>Jours d'absence :</strong> {{ summary.absent_days }}</p>
+        <p><strong>Jours de congé :</strong> {{ summary.on_leave_days }}</p>
+        <p><strong>Total des heures travaillées :</strong> {{ summary.total_hours_worked }}h</p>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ report_title }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            color: #000;
+            font-size: 12pt;
+            line-height: 1.6;
+        }
+        .header {
+            text-align: right;
+            margin-bottom: 40px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 16pt;
+            font-weight: bold;
+        }
+        .content {
+            margin-top: 50px;
+        }
+        h2 {
+            text-align: center;
+            font-size: 18pt;
+            text-decoration: underline;
+            margin-bottom: 50px;
+        }
+        p {
+            text-align: justify;
+            margin-bottom: 20px;
+        }
+        .signature-section {
+            margin-top: 80px;
+            text-align: right;
+        }
+        .signature-section p {
+            text-align: right;
+        }
+        .footer {
+            position: fixed;
+            bottom: -1.5cm;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 8pt;
+            color: #555;
+            border-top: 1px solid #ccc;
+            padding-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="footer">
+        {{ organization_name }} - Document généré par le système KUILINGA
+    </div>
+
+    <div class="header">
+        <h1>{{ organization_name }}</h1>
+        <p>Fait à [Ville], le {{ issue_date.strftime('%d %B %Y') }}</p>
+    </div>
+
+    <h2>ATTESTATION DE PRÉSENCE</h2>
+
+    <div class="content">
+        <p>
+            Nous soussignés, <strong>{{ organization_name }}</strong>, attestons par la présente que
+            <strong>M./Mme {{ employee_name }}</strong>, identifié(e) par le matricule
+            <strong>{{ employee_badge_id }}</strong>, a été présent(e) au sein de notre
+            entreprise.
+        </p>
+        <p>
+            Cette attestation concerne la période allant du
+            <strong>{{ start_date.strftime('%d %B %Y') }}</strong> au
+            <strong>{{ end_date.strftime('%d %B %Y') }}</strong>.
+        </p>
+        <p>
+            Durant cette période de {{ total_days_in_period }} jours calendaires, un total de
+            <strong>{{ present_days }} jours</strong> de présence a été enregistré par notre système de pointage.
+        </p>
+        <p>
+            Cette attestation est délivrée à l'intéressé(e) pour servir et valoir ce que de droit.
+        </p>
+    </div>
+
+    <div class="signature-section">
+        <p>La Direction</p>
+        <br><br><br>
+        <p>_________________________</p>
+    </div>
+
+</body>
+</html>

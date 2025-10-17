@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ report_title }}</title>
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 1.5cm;
+        }
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            color: #333;
+            font-size: 10px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #005a9e;
+            padding-bottom: 10px;
+        }
+        .header h1 {
+            margin: 0;
+            color: #005a9e;
+            font-size: 22px;
+        }
+        .report-info {
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 7px;
+            text-align: left;
+        }
+        th {
+            background-color: #005a9e;
+            color: white;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        .footer {
+            position: fixed;
+            bottom: -1cm;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 9px;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div class="footer">
+        KUILINGA Presence Management - Rapport généré le {{ now().strftime('%d/%m/%Y %H:%M') }}
+    </div>
+
+    <div class="header">
+        <h1>{{ report_title }}</h1>
+    </div>
+
+    <div class="report-info">
+        <p><strong>Département :</strong> {{ department_name }}</p>
+        <p><strong>Période :</strong> {{ period }}</p>
+    </div>
+
+    <h2>Détail des Demandes de Congé</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Employé</th>
+                <th>Type</th>
+                <th>Début</th>
+                <th>Fin</th>
+                <th>Jours</th>
+                <th>Statut</th>
+                <th>Raison</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in data %}
+            <tr>
+                <td>{{ row.employee_name }}</td>
+                <td>{{ row.leave_type }}</td>
+                <td>{{ row.start_date.strftime('%d/%m/%Y') }}</td>
+                <td>{{ row.end_date.strftime('%d/%m/%Y') }}</td>
+                <td>{{ row.total_days }}</td>
+                <td>{{ row.status }}</td>
+                <td>{{ row.reason }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="7" style="text-align: center;">Aucune demande de congé trouvée pour les critères sélectionnés.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</body>
+</html>
