@@ -64,23 +64,28 @@ class MQTTClient:
                     logger.error(f"Device with serial '{device_serial}' not found.")
                     return
 
-            employee = crud_employee.get_by_badge(db, badge_id=payload.get("badge_id"))
-            if not employee:
-                logger.error(f"Employee with badge_id '{payload.get('badge_id')}' not found.")
-                return
+                employee = crud_employee.get_by_badge(db, badge_id=payload.get("badge_id"))
+                if not employee:
+                    logger.error(f"Employee with badge_id '{payload.get('badge_id')}' not found.")
+                    return
 
-            attendance_in = AttendanceCreate(
-                timestamp=payload.get("timestamp"),
-                type=payload.get("type", "in"),
-                employee_id=employee.id,
-                device_id=device.id,
-            )
+                attendance_in = AttendanceCreate(
+                    timestamp=payload.get("timestamp"),
+                    type=payload.get("type", "in"),
+                    employee_id=employee.id,
+                    device_id=device.id,
+                )
 
-            new_attendance = crud_attendance.create(db, obj_in=attendance_in)
-            logger.info(f"Recorded attendance for employee {employee.id}")
+                new_attendance = crud_attendance.create(db, obj_in=attendance_in)
+                logger.info(f"Recorded attendance for employee {employee.id}")
 
-            # Diffuser le nouveau pointage via WebSocket
-            attendance_schema = Attendance.from_orm(new_attendance)
+                # Re-fetch with relationships for the broadcast
+                db.refresh(new_attendance)
+                enriched_attendance = crud.attendance.get(db, id=new_attendance.id)
+
+                # Diffuser le nouveau pointage via WebSocket
+                if enriched_attendance:
+                    attendance_schema = Attendance.from_orm(enriched_attendance)
             message = {
                 "type": "new_attendance",
                 "payload": attendance_schema.dict()
