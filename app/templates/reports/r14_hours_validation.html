@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ report_title }}</title>
+</head>
+<body>
+    <h1>{{ report_title }}</h1>
+    <p>Department: {{ department_name }}</p>
+    <p>Period: {{ period }}</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Employee</th>
+                <th>Total Hours Worked</th>
+                <th>Hours to Validate</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in data %}
+            <tr>
+                <td>{{ row.employee_name }}</td>
+                <td>{{ row.total_hours_worked }}</td>
+                <td>{{ row.total_hours_to_validate }}</td>
+                <td>{{ row.status }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

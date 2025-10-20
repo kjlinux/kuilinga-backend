@@ -284,4 +284,183 @@ class CRUDReport:
             employee_ids=employee_ids
         )
 
+    def get_comparative_analysis_data(self, db: Session, *, year: int, organization_ids: List[str], month: Optional[int] = None, quarter: Optional[int] = None) -> List[Dict[str, Any]]:
+        if month:
+            start_date, end_date = date(year, month, 1), date(year, month, calendar.monthrange(year, month)[1])
+        elif quarter:
+            start_month = (quarter - 1) * 3 + 1
+            end_month = start_month + 2
+            start_date, end_date = date(year, start_month, 1), date(year, end_month, calendar.monthrange(year, end_month)[1])
+        else:
+            start_date, end_date = date(year, 1, 1), date(year, 12, 31)
+
+        analysis_report = []
+        organizations = db.query(models.Organization).filter(models.Organization.id.in_(organization_ids)).all()
+        for org in organizations:
+            presence_data = self.get_organization_presence_data(db, organization_id=org.id, start_date=start_date, end_date=end_date)
+            leaves_data = self.get_organization_leaves_data(db, organization_id=org.id, start_date=start_date, end_date=end_date)
+
+            total_workdays = sum(emp['present_days'] + emp['absent_days'] for emp in presence_data)
+            total_present_days = sum(emp['present_days'] for emp in presence_data)
+            attendance_rate = (total_present_days / total_workdays * 100) if total_workdays > 0 else 0
+
+            analysis_report.append({
+                "organization_name": org.name,
+                "attendance_rate": round(attendance_rate, 2),
+                "total_hours_worked": sum(emp['total_hours_worked'] for emp in presence_data),
+                "total_leave_days": sum((leave.end_date - leave.start_date).days + 1 for leave in leaves_data if leave.status == models.LeaveStatus.APPROVED)
+            })
+        return analysis_report
+
+    def get_device_usage_data(self, db: Session, *, start_date: date, end_date: date, organization_ids: Optional[List[str]] = None, site_ids: Optional[List[str]] = None, status: Optional[str] = None) -> List[Dict[str, Any]]:
+        # TODO: Implement historical device status tracking.
+        # The current Device model only stores the *current* status and does not log historical changes.
+        # To implement this feature correctly, a new model like `DeviceStatusLog` is required.
+        # This function currently ignores the date parameters and returns the current status of all devices.
+
+        query = db.query(models.Device).options(joinedload(models.Device.site).joinedload(models.Site.organization))
+
+        if organization_ids:
+            query = query.join(models.Site).filter(models.Site.organization_id.in_(organization_ids))
+        if site_ids:
+            query = query.filter(models.Device.site_id.in_(site_ids))
+        if status:
+            # This filters by the *current* status, not historical.
+            query = query.filter(models.Device.status == status.lower())
+
+        devices = query.all()
+
+        return [{
+            "device_name": dev.name,
+            "device_serial_number": dev.serial_number,
+            "site_name": dev.site.name if dev.site else "N/A",
+            "organization_name": dev.site.organization.name if dev.site and dev.site.organization else "N/A",
+            "status": dev.status.value,
+            "last_ping": "N/A" # last_ping is not in the model
+        } for dev in devices]
+
+    def get_user_audit_data(self, db: Session, *, organization_ids: Optional[List[str]] = None, role_ids: Optional[List[str]] = None, is_active: Optional[bool] = None) -> List[Dict[str, Any]]:
+        query = db.query(models.User).options(
+            joinedload(models.User.role),
+            joinedload(models.User.organization)
+        )
+
+        if organization_ids:
+            query = query.filter(models.User.organization_id.in_(organization_ids))
+        if role_ids:
+            query = query.filter(models.User.role_id.in_(role_ids))
+        if is_active is not None:
+            query = query.filter(models.User.is_active == is_active)
+
+        users = query.all()
+
+        return [{
+            "full_name": user.full_name,
+            "email": user.email,
+            "role": user.role.name if user.role else "N/A",
+            "organization_name": user.organization.name if user.organization else "N/A",
+            "is_active": user.is_active,
+            "last_login": user.last_login.isoformat() if user.last_login else "N/A"
+        } for user in users]
+
+
+    def get_anomalies_report_data(self, db: Session, *, organization_id: str, start_date: date, end_date: date, tardiness_threshold: int, site_ids: Optional[List[str]] = None, department_ids: Optional[List[str]] = None) -> List[Dict[str, Any]]:
+        query = db.query(models.Employee).options(joinedload(models.Employee.user), joinedload(models.Employee.department)).filter(models.Employee.organization_id == organization_id)
+        if site_ids: query = query.filter(models.Employee.site_id.in_(site_ids))
+        if department_ids: query = query.filter(models.Employee.department_id.in_(department_ids))
+
+        employees = query.all()
+        emp_details = self._get_bulk_employee_presence_details(db, [emp.id for emp in employees], start_date, end_date)
+
+        anomalies = []
+        # TODO: Implement shift-based tardiness. This requires a fully implemented Shift model and assignment of shifts to employees.
+        # The current logic assumes a fixed 9:00 AM start time for all employees, which is not suitable for production.
+        assumed_start_time = timedelta(hours=9)
+
+        for emp in employees:
+            daily_data = emp_details.get(emp.id, [])
+            for day in daily_data:
+                if day['status'] == 'Present':
+                    if day['check_in'] and not day['check_out'] and day['date'] < date.today():
+                        anomalies.append({
+                            "employee_name": emp.user.full_name, "department_name": emp.department.name if emp.department else 'N/A', "date": day['date'],
+                            "anomaly_type": "Missing Check-out", "details": f"Checked in at {day['check_in']} but never checked out."
+                        })
+
+                    if day['check_in']:
+                        h, m, s = map(int, day['check_in'].split(':'))
+                        check_in_time = timedelta(hours=h, minutes=m, seconds=s)
+                        if (check_in_time - assumed_start_time).total_seconds() / 60 > tardiness_threshold:
+                             anomalies.append({
+                                "employee_name": emp.user.full_name, "department_name": emp.department.name if emp.department else 'N/A', "date": day['date'],
+                                "anomaly_type": "Late Arrival", "details": f"Arrived at {day['check_in']}, {((check_in_time - assumed_start_time).total_seconds() / 60):.0f} minutes late."
+                            })
+        return anomalies
+
+    def get_payroll_export_data(self, db: Session, *, organization_id: str, year: int, month: int, site_ids: Optional[List[str]] = None) -> List[Dict[str, Any]]:
+        _, num_days = calendar.monthrange(year, month)
+        start_date, end_date = date(year, month, 1), date(year, month, num_days)
+
+        presence_data = self.get_organization_presence_data(db, organization_id=organization_id, start_date=start_date, end_date=end_date, site_ids=site_ids)
+        leaves_data = self.get_organization_leaves_data(db, organization_id=organization_id, start_date=start_date, end_date=end_date)
+
+        leaves_by_employee = {}
+        for leave in leaves_data:
+            if leave.status == models.LeaveStatus.APPROVED:
+                leaves_by_employee.setdefault(leave.employee_id, 0)
+                # Correctly calculate leave days that fall within the reporting month
+                overlap_start = max(leave.start_date, start_date)
+                overlap_end = min(leave.end_date, end_date)
+                if overlap_start <= overlap_end:
+                    leaves_by_employee[leave.employee_id] += (overlap_end - overlap_start).days + 1
+
+        payroll_data = []
+        for emp_data in presence_data:
+            # TODO: Implement robust overtime calculation.
+            # The current logic assumes a standard 8-hour workday, which is a placeholder.
+            # A full implementation requires integrating with a shift and contract management system
+            # to determine the correct theoretical hours for each employee.
+            workdays = emp_data['present_days'] + emp_data['absent_days']
+            theoretical_hours = workdays * 8
+            overtime = max(0, emp_data['total_hours_worked'] - theoretical_hours)
+
+            payroll_data.append({
+                "employee_id": emp_data['employee_id'],
+                "employee_name": emp_data['employee_name'],
+                "total_hours_worked": round(emp_data['total_hours_worked'], 2),
+                "overtime_hours": round(overtime, 2),
+                "leave_days": leaves_by_employee.get(emp_data['employee_id'], 0)
+            })
+        return payroll_data
+
+
+    def get_hours_validation_data(self, db: Session, *, department_id: str, year: int, month: int, employee_ids: Optional[List[str]] = None, validation_status: str) -> List[Dict[str, Any]]:
+        _, num_days = calendar.monthrange(year, month)
+        start_date, end_date = date(year, month, 1), date(year, month, num_days)
+
+        presence_data = self.get_department_presence_data(db, department_id=department_id, start_date=start_date, end_date=end_date, employee_ids=employee_ids)
+
+        # TODO: Implement a full validation workflow.
+        # This requires:
+        # 1. A new model, e.g., `ValidatedHours`, to store the validation status per employee per period.
+        # 2. An API endpoint for managers to submit validations.
+        # 3. Filtering logic in this function to use the `validation_status` parameter.
+        # The current implementation returns all hours as 'Pending Validation'.
+        validation_report = []
+        for emp in presence_data:
+            validation_report.append({
+                "employee_name": emp["employee_name"],
+                "total_hours_worked": emp["total_hours_worked"],
+                "total_hours_to_validate": emp["total_hours_worked"], # Assuming all worked hours need validation
+                "status": "Pending Validation"
+            })
+
+        # Here you could filter by status if it were a real field
+        # if validation_status == "validated":
+        #     return [row for row in validation_report if row['status'] == 'Validated']
+        # else:
+        #     return [row for row in validation_report if row['status'] == 'Pending Validation']
+
+        return validation_report
+
 report = CRUDReport()

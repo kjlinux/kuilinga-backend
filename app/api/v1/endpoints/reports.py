@@ -144,6 +144,110 @@ async def download_team_weekly_report(*, db: Session = Depends(get_db), report_i
     elif report_in.format == schemas.ReportFormat.EXCEL: return await reporting_service.generate_excel(response_data["data"], filename)
     else: raise HTTPException(status_code=400, detail="Unsupported format. Please choose PDF or Excel.")
 
+
+# R14
+def _get_r14_data(db: Session, report_in: schemas.HoursValidationRequest, current_manager: models.Employee) -> Dict[str, Any]:
+    report_data = crud.report.get_hours_validation_data(
+        db,
+        department_id=current_manager.department_id,
+        year=report_in.year,
+        month=report_in.month,
+        employee_ids=report_in.employee_ids,
+        validation_status=report_in.validation_status
+    )
+    if not report_data:
+        raise HTTPException(status_code=404, detail="No hours data found for the selected period.")
+
+    period_str = f"{calendar.month_name[report_in.month]} {report_in.year}"
+    return {
+        "department_name": current_manager.department.name,
+        "period": period_str,
+        "data": report_data
+    }
+
+@router.post("/manager/hours-validation/preview", response_model=schemas.HoursValidationResponse, summary="R14 - Preview Hours Validation Report", tags=["Reports - Manager"])
+def preview_hours_validation_report(*, db: Session = Depends(get_db), report_in: schemas.HoursValidationRequest, current_manager: models.Employee = Depends(get_current_active_manager)):
+    return _get_r14_data(db, report_in, current_manager)
+
+@router.post("/manager/hours-validation/download", summary="R14 - Download Hours Validation Report", tags=["Reports - Manager"])
+async def download_hours_validation_report(*, db: Session = Depends(get_db), report_in: schemas.HoursValidationRequest, current_manager: models.Employee = Depends(get_current_active_manager)):
+    response_data = _get_r14_data(db, report_in, current_manager)
+    filename = f"R14_HoursValidation_{current_manager.department.name}_{response_data['period']}.{report_in.format.value}"
+    context = {"report_title": "Validation des Heures", **response_data}
+
+    if report_in.format == schemas.ReportFormat.PDF:
+        return await reporting_service.generate_pdf_from_html("reports/r14_hours_validation.html", context, filename)
+    elif report_in.format == schemas.ReportFormat.EXCEL:
+        return await reporting_service.generate_excel(response_data["data"], filename)
+    else:
+        raise HTTPException(status_code=400, detail="Unsupported format. Please choose PDF or Excel.")
+
+
+# R8
+def _get_r8_data(db: Session, report_in: schemas.AnomaliesReportRequest, current_user: models.User) -> Dict[str, Any]:
+    report_data = crud.report.get_anomalies_report_data(
+        db,
+        organization_id=current_user.organization_id,
+        start_date=report_in.start_date,
+        end_date=report_in.end_date,
+        tardiness_threshold=report_in.tardiness_threshold,
+        site_ids=report_in.site_ids,
+        department_ids=report_in.department_ids,
+    )
+    if not report_data:
+        raise HTTPException(status_code=404, detail="No anomalies found for the selected criteria.")
+    return {
+        "organization_name": current_user.organization.name,
+        "period": f"{report_in.start_date.strftime('%d/%m/%Y')} - {report_in.end_date.strftime('%d/%m/%Y')}",
+        "data": report_data
+    }
+
+@router.post("/organization/anomalies/preview", response_model=schemas.AnomaliesReportResponse, summary="R8 - Preview Anomalies Report", tags=["Reports - Organization"], dependencies=[Depends(require_role("admin"))])
+def preview_anomalies_report(*, db: Session = Depends(get_db), report_in: schemas.AnomaliesReportRequest, current_user: models.User = Depends(get_current_active_user)):
+    if not current_user.organization_id:
+        raise HTTPException(status_code=403, detail="User not associated with an organization.")
+    return _get_r8_data(db, report_in, current_user)
+
+@router.post("/organization/anomalies/download", summary="R8 - Download Anomalies Report", tags=["Reports - Organization"], dependencies=[Depends(require_role("admin"))])
+async def download_anomalies_report(*, db: Session = Depends(get_db), report_in: schemas.AnomaliesReportRequest, current_user: models.User = Depends(get_current_active_user)):
+    if not current_user.organization_id:
+        raise HTTPException(status_code=403, detail="User not associated with an organization.")
+    response_data = _get_r8_data(db, report_in, current_user)
+    filename = f"R08_Anomalies_{current_user.organization.name}_{report_in.start_date}_to_{report_in.end_date}.{report_in.format.value}"
+    context = {"report_title": "Rapport des Retards et Anomalies", **response_data}
+    if report_in.format == schemas.ReportFormat.PDF:
+        return await reporting_service.generate_pdf_from_html("reports/r08_anomalies.html", context, filename)
+    elif report_in.format in [schemas.ReportFormat.EXCEL, schemas.ReportFormat.CSV]:
+        return await reporting_service.generate_excel(response_data["data"], filename) if report_in.format == schemas.ReportFormat.EXCEL else await reporting_service.generate_csv(response_data["data"], filename)
+    else:
+        raise HTTPException(status_code=400, detail="Unsupported format.")
+
+# R11
+@router.post("/organization/payroll-export/download", summary="R11 - Download Payroll Export", tags=["Reports - Organization"], dependencies=[Depends(require_role("admin"))])
+async def download_payroll_export(*, db: Session = Depends(get_db), report_in: schemas.PayrollExportRequest, current_user: models.User = Depends(get_current_active_user)):
+    if not current_user.organization_id:
+        raise HTTPException(status_code=403, detail="User not associated with an organization.")
+
+    report_data = crud.report.get_payroll_export_data(
+        db,
+        organization_id=current_user.organization_id,
+        year=report_in.year,
+        month=report_in.month,
+        site_ids=report_in.site_ids
+    )
+    if not report_data:
+        raise HTTPException(status_code=404, detail="No data available for payroll export.")
+
+    period = f"{report_in.year}-{report_in.month:02d}"
+    filename = f"R11_PayrollExport_{current_user.organization.name}_{period}.{report_in.format.value}"
+
+    if report_in.format == schemas.ReportFormat.EXCEL:
+        return await reporting_service.generate_excel(report_data, filename)
+    elif report_in.format == schemas.ReportFormat.CSV:
+        return await reporting_service.generate_csv(report_data, filename)
+    else:
+        raise HTTPException(status_code=400, detail="Unsupported format for payroll export. Please choose Excel or CSV.")
+
 # R15
 def _get_r15_data(db: Session, report_in: schemas.DepartmentLeavesRequest, current_manager: models.Employee) -> Dict[str, Any]:
     leaves = crud.report.get_department_leaves_data(db, department_id=current_manager.department_id, start_date=report_in.start_date, end_date=report_in.end_date, leave_type=report_in.leave_type, status=report_in.status, employee_ids=report_in.employee_ids)
@@ -272,6 +376,89 @@ async def download_organization_leaves_report(*, db: Session = Depends(get_db), 
     if report_in.format == schemas.ReportFormat.PDF: return await reporting_service.generate_pdf_from_html("reports/r07_organization_leaves.html", context, filename)
     elif report_in.format in [schemas.ReportFormat.EXCEL, schemas.ReportFormat.CSV]: return await reporting_service.generate_excel(response_data["data"], filename) if report_in.format == schemas.ReportFormat.EXCEL else await reporting_service.generate_csv(response_data["data"], filename)
     else: raise HTTPException(status_code=400, detail="Unsupported format.")
+
+
+# R2
+def _get_r2_data(db: Session, report_in: schemas.ComparativeAnalysisRequest) -> Dict[str, Any]:
+    # Simplified period string generation for R2
+    if report_in.month:
+        period_str = f"{calendar.month_name[report_in.month]} {report_in.year}"
+    elif report_in.quarter:
+        period_str = f"Q{report_in.quarter} {report_in.year}"
+    else:
+        period_str = f"Année {report_in.year}"
+
+    report_data = crud.report.get_comparative_analysis_data(db, year=report_in.year, organization_ids=report_in.organization_ids, month=report_in.month, quarter=report_in.quarter)
+    if not report_data:
+        raise HTTPException(status_code=404, detail="No data found for the selected criteria.")
+    return {"period": period_str, "data": report_data}
+
+@router.post("/superuser/comparative-analysis/preview", response_model=schemas.ComparativeAnalysisResponse, summary="R2 - Preview Comparative Analysis Report", tags=["Reports - Super Admin"], dependencies=[Depends(get_current_active_superuser)])
+def preview_comparative_analysis_report(*, db: Session = Depends(get_db), report_in: schemas.ComparativeAnalysisRequest):
+    return _get_r2_data(db, report_in)
+
+@router.post("/superuser/comparative-analysis/download", summary="R2 - Download Comparative Analysis Report", tags=["Reports - Super Admin"], dependencies=[Depends(get_current_active_superuser)])
+async def download_comparative_analysis_report(*, db: Session = Depends(get_db), report_in: schemas.ComparativeAnalysisRequest):
+    response_data = _get_r2_data(db, report_in)
+    filename = f"R02_ComparativeAnalysis_{response_data['period']}.{report_in.format.value}"
+    context = {"report_title": "Analyse Comparative Inter-Organisations", **response_data}
+    if report_in.format == schemas.ReportFormat.PDF:
+        return await reporting_service.generate_pdf_from_html("reports/r02_comparative_analysis.html", context, filename)
+    elif report_in.format == schemas.ReportFormat.EXCEL:
+        return await reporting_service.generate_excel(response_data["data"], filename)
+    else:
+        raise HTTPException(status_code=400, detail="Unsupported format. Please choose PDF or Excel.")
+
+# R3
+def _get_r3_data(db: Session, report_in: schemas.DeviceUsageRequest) -> Dict[str, Any]:
+    report_data = crud.report.get_device_usage_data(db, start_date=report_in.start_date, end_date=report_in.end_date, organization_ids=report_in.organization_ids, site_ids=report_in.site_ids, status=report_in.status)
+    if not report_data:
+        raise HTTPException(status_code=404, detail="No device data found for the selected criteria.")
+    return {"period": f"{report_in.start_date.strftime('%d/%m/%Y')} - {report_in.end_date.strftime('%d/%m/%Y')}", "data": report_data}
+
+@router.post("/superuser/device-usage/preview", response_model=schemas.DeviceUsageResponse, summary="R3 - Preview Device Usage Report", tags=["Reports - Super Admin"], dependencies=[Depends(get_current_active_superuser)])
+def preview_device_usage_report(*, db: Session = Depends(get_db), report_in: schemas.DeviceUsageRequest):
+    return _get_r3_data(db, report_in)
+
+@router.post("/superuser/device-usage/download", summary="R3 - Download Device Usage Report", tags=["Reports - Super Admin"], dependencies=[Depends(get_current_active_superuser)])
+async def download_device_usage_report(*, db: Session = Depends(get_db), report_in: schemas.DeviceUsageRequest):
+    response_data = _get_r3_data(db, report_in)
+    filename = f"R03_DeviceUsage_{report_in.start_date}_to_{report_in.end_date}.{report_in.format.value}"
+    context = {"report_title": "Rapport d'Utilisation des Appareils", **response_data}
+    if report_in.format == schemas.ReportFormat.PDF:
+        return await reporting_service.generate_pdf_from_html("reports/r03_device_usage.html", context, filename)
+    elif report_in.format in [schemas.ReportFormat.EXCEL, schemas.ReportFormat.CSV]:
+        return await reporting_service.generate_excel(response_data["data"], filename) if report_in.format == schemas.ReportFormat.EXCEL else await reporting_service.generate_csv(response_data["data"], filename)
+    else:
+        raise HTTPException(status_code=400, detail="Unsupported format.")
+
+# R4
+def _get_r4_data(db: Session, report_in: schemas.UserAuditRequest) -> Dict[str, Any]:
+    report_data = crud.report.get_user_audit_data(db, organization_ids=report_in.organization_ids, role_ids=report_in.role_ids, is_active=report_in.is_active)
+    if not report_data:
+        raise HTTPException(status_code=404, detail="No user data found for the selected criteria.")
+    filters = {
+        "organizations": report_in.organization_ids,
+        "roles": report_in.role_ids,
+        "is_active": report_in.is_active
+    }
+    return {"filters": filters, "user_count": len(report_data), "data": report_data}
+
+@router.post("/superuser/user-audit/preview", response_model=schemas.UserAuditResponse, summary="R4 - Preview User and Role Audit Report", tags=["Reports - Super Admin"], dependencies=[Depends(get_current_active_superuser)])
+def preview_user_audit_report(*, db: Session = Depends(get_db), report_in: schemas.UserAuditRequest):
+    return _get_r4_data(db, report_in)
+
+@router.post("/superuser/user-audit/download", summary="R4 - Download User and Role Audit Report", tags=["Reports - Super Admin"], dependencies=[Depends(get_current_active_superuser)])
+async def download_user_audit_report(*, db: Session = Depends(get_db), report_in: schemas.UserAuditRequest):
+    response_data = _get_r4_data(db, report_in)
+    filename = f"R04_UserAudit.{report_in.format.value}"
+    context = {"report_title": "Audit des Utilisateurs et Rôles", **response_data}
+    if report_in.format == schemas.ReportFormat.PDF:
+        return await reporting_service.generate_pdf_from_html("reports/r04_user_audit.html", context, filename)
+    elif report_in.format == schemas.ReportFormat.EXCEL:
+        return await reporting_service.generate_excel(response_data["data"], filename)
+    else:
+        raise HTTPException(status_code=400, detail="Unsupported format. Please choose PDF or Excel.")
 
 # R9
 def _get_r9_data(db: Session, report_in: schemas.WorkedHoursRequest, current_user: models.User) -> Dict[str, Any]:

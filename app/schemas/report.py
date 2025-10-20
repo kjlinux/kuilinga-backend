@@ -246,6 +246,30 @@ class TeamPerformanceResponse(BaseModel):
     data: List[TeamPerformanceRow]
 
 
+class HoursValidationRequest(BaseModel):
+    """Request for R14 - Hours Validation Report"""
+    year: int
+    month: int
+    employee_ids: Optional[List[str]] = None
+    validation_status: Optional[str] = "pending" # pending, validated
+    format: ReportFormat = ReportFormat.PDF
+
+
+class HoursValidationRow(BaseModel):
+    """Data row for R14"""
+    employee_name: str
+    total_hours_worked: float
+    total_hours_to_validate: float
+    status: str
+
+
+class HoursValidationResponse(BaseModel):
+    """Response for R14 preview"""
+    department_name: str
+    period: str
+    data: List[HoursValidationRow]
+
+
 # Schemas for HR / Org Admin Reports (Phase 3)
 
 class OrganizationPresenceRequest(BaseModel):
@@ -339,6 +363,55 @@ class SiteActivityResponse(BaseModel):
     data: List[SiteActivityRow]
 
 
+class AnomaliesReportRequest(BaseModel):
+    """Request for R8 - Anomalies Report"""
+    start_date: date
+    end_date: date
+    site_ids: Optional[List[str]] = None
+    department_ids: Optional[List[str]] = None
+    tardiness_threshold: int = 5 # minutes
+    format: ReportFormat = ReportFormat.PDF
+
+
+class AnomaliesReportRow(BaseModel):
+    """Data row for R8"""
+    employee_name: str
+    department_name: Optional[str]
+    date: date
+    anomaly_type: str # e.g., Late Arrival, Missing Check-out
+    details: str
+
+
+class AnomaliesReportResponse(BaseModel):
+    """Response for R8 preview"""
+    organization_name: str
+    period: str
+    data: List[AnomaliesReportRow]
+
+
+class PayrollExportRequest(BaseModel):
+    """Request for R11 - Payroll Export"""
+    year: int
+    month: int
+    site_ids: Optional[List[str]] = None
+    format: ReportFormat = ReportFormat.CSV
+
+
+class PayrollExportRow(BaseModel):
+    """Data row for R11"""
+    employee_id: str
+    employee_name: str
+    total_hours_worked: float
+    overtime_hours: float
+    leave_days: int
+
+
+class PayrollExportResponse(BaseModel):
+    """Response for R11 - Not for preview, direct download"""
+    filename: str
+    content: str # Could be base64 encoded string
+
+
 # Schemas for Super Admin Reports (Phase 4)
 
 class MultiOrgConsolidatedRequest(BaseModel):
@@ -364,3 +437,77 @@ class MultiOrgConsolidatedResponse(BaseModel):
     """Response for R1 preview"""
     period: str
     data: List[MultiOrgConsolidatedRow]
+
+
+class ComparativeAnalysisRequest(BaseModel):
+    """Request for R2 - Comparative Analysis Report"""
+    year: int
+    month: Optional[int] = None
+    quarter: Optional[int] = None
+    organization_ids: List[str]
+    format: ReportFormat = ReportFormat.PDF
+
+
+class ComparativeAnalysisRow(BaseModel):
+    """Data row for R2"""
+    organization_name: str
+    attendance_rate: float
+    total_hours_worked: float
+    total_leave_days: int
+
+
+class ComparativeAnalysisResponse(BaseModel):
+    """Response for R2 preview"""
+    period: str
+    data: List[ComparativeAnalysisRow]
+
+
+class DeviceUsageRequest(BaseModel):
+    """Request for R3 - Device Usage Report"""
+    start_date: date
+    end_date: date
+    organization_ids: Optional[List[str]] = None
+    site_ids: Optional[List[str]] = None
+    status: Optional[str] = None # Online, Offline, Maintenance
+    format: ReportFormat = ReportFormat.PDF
+
+
+class DeviceUsageRow(BaseModel):
+    """Data row for R3"""
+    device_name: str
+    device_serial_number: str
+    site_name: Optional[str]
+    organization_name: str
+    status: str
+    last_ping: Optional[str]
+
+
+class DeviceUsageResponse(BaseModel):
+    """Response for R3 preview"""
+    period: str
+    data: List[DeviceUsageRow]
+
+
+class UserAuditRequest(BaseModel):
+    """Request for R4 - User and Role Audit Report"""
+    organization_ids: Optional[List[str]] = None
+    role_ids: Optional[List[str]] = None
+    is_active: Optional[bool] = None
+    format: ReportFormat = ReportFormat.PDF
+
+
+class UserAuditRow(BaseModel):
+    """Data row for R4"""
+    full_name: str
+    email: str
+    role: str
+    organization_name: str
+    is_active: bool
+    last_login: Optional[str]
+
+
+class UserAuditResponse(BaseModel):
+    """Response for R4 preview"""
+    filters: Dict[str, Any]
+    user_count: int
+    data: List[UserAuditRow]

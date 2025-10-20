@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ report_title }}</title>
+</head>
+<body>
+    <h1>{{ report_title }}</h1>
+    <p>Period: {{ period }}</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Organization</th>
+                <th>Attendance Rate</th>
+                <th>Total Hours Worked</th>
+                <th>Total Leave Days</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in data %}
+            <tr>
+                <td>{{ row.organization_name }}</td>
+                <td>{{ row.attendance_rate }}%</td>
+                <td>{{ row.total_hours_worked }}</td>
+                <td>{{ row.total_leave_days }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
