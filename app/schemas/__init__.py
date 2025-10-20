@@ -42,6 +42,23 @@ from .report import (
     MultiOrgConsolidatedRequest,
     MultiOrgConsolidatedRow,
     MultiOrgConsolidatedResponse,
+    ComparativeAnalysisRequest,
+    ComparativeAnalysisRow,
+    ComparativeAnalysisResponse,
+    DeviceUsageRequest,
+    DeviceUsageRow,
+    DeviceUsageResponse,
+    UserAuditRequest,
+    UserAuditRow,
+    UserAuditResponse,
+    AnomaliesReportRequest,
+    AnomaliesReportRow,
+    AnomaliesReportResponse,
+    PayrollExportRequest,
+    PayrollExportRow,
+    HoursValidationRequest,
+    HoursValidationRow,
+    HoursValidationResponse,
 )
 from .role import Role, RoleCreate, RoleUpdate, Permission, PermissionCreate, PermissionUpdate
 from .shift import Shift, ShiftCreate, ShiftUpdate
