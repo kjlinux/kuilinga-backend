@@ -238,15 +238,23 @@ async def download_payroll_export(*, db: Session = Depends(get_db), report_in: s
     if not report_data:
         raise HTTPException(status_code=404, detail="No data available for payroll export.")
 
-    period = f"{report_in.year}-{report_in.month:02d}"
+    period = f"{calendar.month_name[report_in.month]} {report_in.year}"
     filename = f"R11_PayrollExport_{current_user.organization.name}_{period}.{report_in.format.value}"
 
-    if report_in.format == schemas.ReportFormat.EXCEL:
+    if report_in.format == schemas.ReportFormat.PDF:
+        context = {
+            "report_title": "Export Paie",
+            "organization_name": current_user.organization.name,
+            "period": period,
+            "data": report_data
+        }
+        return await reporting_service.generate_pdf_from_html("reports/r11_payroll_export.html", context, filename)
+    elif report_in.format == schemas.ReportFormat.EXCEL:
         return await reporting_service.generate_excel(report_data, filename)
     elif report_in.format == schemas.ReportFormat.CSV:
         return await reporting_service.generate_csv(report_data, filename)
     else:
-        raise HTTPException(status_code=400, detail="Unsupported format for payroll export. Please choose Excel or CSV.")
+        raise HTTPException(status_code=400, detail="Unsupported format for this report.")
 
 # R15
 def _get_r15_data(db: Session, report_in: schemas.DepartmentLeavesRequest, current_manager: models.Employee) -> Dict[str, Any]:

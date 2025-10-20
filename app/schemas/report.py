@@ -394,7 +394,7 @@ class PayrollExportRequest(BaseModel):
     year: int
     month: int
     site_ids: Optional[List[str]] = None
-    format: ReportFormat = ReportFormat.CSV
+    format: ReportFormat = ReportFormat.PDF
 
 
 class PayrollExportRow(BaseModel):

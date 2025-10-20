@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ report_title }}</title>
+    <style>
+        body { font-family: sans-serif; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #dddddd; text-align: left; padding: 8px; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <h1>{{ report_title }}</h1>
+    <p><strong>Organisation:</strong> {{ organization_name }}</p>
+    <p><strong>Période:</strong> {{ period }}</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID Employé</th>
+                <th>Nom de l'employé</th>
+                <th>Heures travaillées totales</th>
+                <th>Heures supplémentaires</th>
+                <th>Jours de congé</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in data %}
+            <tr>
+                <td>{{ row.employee_id }}</td>
+                <td>{{ row.employee_name }}</td>
+                <td>{{ "%.2f"|format(row.total_hours_worked) }}</td>
+                <td>{{ "%.2f"|format(row.overtime_hours) }}</td>
+                <td>{{ row.leave_days }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
