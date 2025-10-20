@@ -23,6 +23,27 @@ PERMISSIONS = [
     # Permissions pour les pointages
     {"name": "attendance:create", "description": "Créer un pointage"},
     {"name": "attendance:read", "description": "Lire les pointages"},
+    # Permissions pour les rapports
+    {"name": "report:R1:view", "description": "Voir le rapport consolidé multi-organisations"},
+    {"name": "report:R2:view", "description": "Voir l'analyse comparative inter-organisations"},
+    {"name": "report:R3:view", "description": "Voir le rapport d'utilisation des devices"},
+    {"name": "report:R4:view", "description": "Voir l'audit des utilisateurs et rôles"},
+    {"name": "report:R5:view", "description": "Voir le rapport de présence globale organisation"},
+    {"name": "report:R6:view", "description": "Voir le rapport mensuel synthétique"},
+    {"name": "report:R7:view", "description": "Voir l'analyse des absences et congés"},
+    {"name": "report:R8:view", "description": "Voir le rapport des retards et anomalies"},
+    {"name": "report:R9:view", "description": "Voir le rapport heures travaillées par employé"},
+    {"name": "report:R10:view", "description": "Voir le rapport d'activité par site"},
+    {"name": "report:R11:view", "description": "Voir l'export paie"},
+    {"name": "report:R12:view", "description": "Voir le rapport de présence département"},
+    {"name": "report:R13:view", "description": "Voir le rapport hebdomadaire équipe"},
+    {"name": "report:R14:view", "description": "Voir la validation des heures"},
+    {"name": "report:R15:view", "description": "Voir les demandes de congés"},
+    {"name": "report:R16:view", "description": "Voir la performance présence équipe"},
+    {"name": "report:R17:view", "description": "Voir son relevé de présence"},
+    {"name": "report:R18:view", "description": "Voir son récapitulatif mensuel"},
+    {"name": "report:R19:view", "description": "Voir ses congés"},
+    {"name": "report:R20:view", "description": "Voir son attestation de présence"},
 ]
 
 # Définition des rôles et des permissions qui leur sont associées
@@ -37,6 +58,25 @@ ROLES = {
             "department:read",
             "attendance:read",
             "attendance:create", # Pour les pointages manuels
+            "report:R5:view",
+            "report:R6:view",
+            "report:R7:view",
+            "report:R8:view",
+            "report:R9:view",
+            "report:R10:view",
+            "report:R11:view",
+        ],
+    },
+    "Manager de département": {
+        "description": "Gère une équipe spécifique et accède aux rapports départementaux.",
+        "permissions": [
+            "department:read",
+            "attendance:read",
+            "report:R12:view",
+            "report:R13:view",
+            "report:R14:view",
+            "report:R15:view",
+            "report:R16:view",
         ],
     },
     "Employé / Étudiant": {
@@ -44,13 +84,17 @@ ROLES = {
         "permissions": [
             "attendance:read", # Logique métier à affiner pour ne voir que les siens
             "attendance:create", # Pour pointer
+            "report:R17:view",
+            "report:R18:view",
+            "report:R19:view",
+            "report:R20:view",
         ],
     },
 }
 
 async def seed_data():
     print("Début du seeding des rôles et permissions...")
-    db: Session = next(SessionLocal.get_db())
+    db: Session = SessionLocal()
 
     try:
         # 1. Créer toutes les permissions

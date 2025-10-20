@@ -21,9 +21,14 @@ sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__), '..'
 from app.db.base import Base
 # Import all models to ensure they are registered with Base.metadata
 from app.models import *
+from app.config import settings
 
 # The target metadata for 'autogenerate' support
 target_metadata = Base.metadata
+
+# Set the database URL from the application settings
+if settings.DATABASE_URL:
+    config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
