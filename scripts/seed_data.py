@@ -1,6 +1,7 @@
 """
 Script complet pour peupler la base de données avec des données réalistes
 Crée: Organizations, Sites, Departments, Users, Roles, Permissions, Employees, Devices, Attendances, Leaves
+Inclut toutes les permissions de seed.py et seed_data.py
 """
 import sys
 from pathlib import Path
@@ -24,7 +25,7 @@ from app.models.role import Role, Permission
 from app.core.security import get_password_hash
 
 
-# ==================== PERMISSIONS ====================
+# ==================== PERMISSIONS (FUSIONNÉES) ====================
 PERMISSIONS_DATA = [
     # User management
     {"name": "user:create", "description": "Créer un utilisateur"},
@@ -64,6 +65,10 @@ PERMISSIONS_DATA = [
     {"name": "role:update", "description": "Mettre à jour un rôle"},
     {"name": "role:delete", "description": "Supprimer un rôle"},
     {"name": "role:assign", "description": "Assigner un rôle"},
+    {"name": "role:assign_permission", "description": "Assigner une permission à un rôle"},
+    
+    # Permission management
+    {"name": "permission:read", "description": "Lire les permissions"},
     
     # Device management
     {"name": "device:create", "description": "Créer un appareil"},
@@ -71,15 +76,39 @@ PERMISSIONS_DATA = [
     {"name": "device:update", "description": "Mettre à jour un appareil"},
     {"name": "device:delete", "description": "Supprimer un appareil"},
     
-    # Reports
+    # Reports - From seed.py (R1-R20)
     {"name": "report:generate", "description": "Générer des rapports"},
     {"name": "report:export", "description": "Exporter des rapports"},
+    {"name": "report:R1:view", "description": "Voir le rapport consolidé multi-organisations"},
+    {"name": "report:R2:view", "description": "Voir l'analyse comparative inter-organisations"},
+    {"name": "report:R3:view", "description": "Voir le rapport d'utilisation des devices"},
+    {"name": "report:R4:view", "description": "Voir l'audit des utilisateurs et rôles"},
+    {"name": "report:R5:view", "description": "Voir le rapport de présence globale organisation"},
+    {"name": "report:R6:view", "description": "Voir le rapport mensuel synthétique"},
+    {"name": "report:R7:view", "description": "Voir l'analyse des absences et congés"},
+    {"name": "report:R8:view", "description": "Voir le rapport des retards et anomalies"},
+    {"name": "report:R9:view", "description": "Voir le rapport heures travaillées par employé"},
+    {"name": "report:R10:view", "description": "Voir le rapport d'activité par site"},
+    {"name": "report:R11:view", "description": "Voir l'export paie"},
+    {"name": "report:R12:view", "description": "Voir le rapport de présence département"},
+    {"name": "report:R13:view", "description": "Voir le rapport hebdomadaire équipe"},
+    {"name": "report:R14:view", "description": "Voir la validation des heures"},
+    {"name": "report:R15:view", "description": "Voir les demandes de congés"},
+    {"name": "report:R16:view", "description": "Voir la performance présence équipe"},
+    {"name": "report:R17:view", "description": "Voir son relevé de présence"},
+    {"name": "report:R18:view", "description": "Voir son récapitulatif mensuel"},
+    {"name": "report:R19:view", "description": "Voir ses congés"},
+    {"name": "report:R20:view", "description": "Voir son attestation de présence"},
 ]
 
-# ==================== ROLES ====================
+# ==================== ROLES (FUSIONNÉS) ====================
 ROLES_DATA = {
     "Super Administrateur": {
         "description": "Accès complet à toutes les fonctionnalités du système",
+        "permissions": [p["name"] for p in PERMISSIONS_DATA],
+    },
+    "Administrateur système": {
+        "description": "Accès complet à toutes les fonctionnalités du système (alias)",
         "permissions": [p["name"] for p in PERMISSIONS_DATA],
     },
     "Administrateur RH": {
@@ -88,9 +117,23 @@ ROLES_DATA = {
             "user:read", "user:update",
             "employee:create", "employee:read", "employee:update", "employee:delete",
             "department:read", "department:update",
-            "attendance:read:all",
+            "attendance:read:all", "attendance:create",
             "leave:read:all", "leave:approve", "leave:reject",
             "report:generate", "report:export",
+            "report:R5:view", "report:R6:view", "report:R7:view", 
+            "report:R8:view", "report:R9:view", "report:R10:view", "report:R11:view",
+        ],
+    },
+    "Manager / Responsable RH": {
+        "description": "Gère les équipes, valide les absences et consulte les rapports",
+        "permissions": [
+            "department:read",
+            "employee:read",
+            "attendance:read:all", "attendance:create",
+            "leave:read:all", "leave:approve", "leave:reject",
+            "report:generate",
+            "report:R5:view", "report:R6:view", "report:R7:view",
+            "report:R8:view", "report:R9:view", "report:R10:view", "report:R11:view",
         ],
     },
     "Manager": {
@@ -103,11 +146,31 @@ ROLES_DATA = {
             "report:generate",
         ],
     },
+    "Manager de département": {
+        "description": "Gère une équipe spécifique et accède aux rapports départementaux",
+        "permissions": [
+            "department:read",
+            "employee:read",
+            "attendance:read:all",
+            "leave:read:all", "leave:approve", "leave:reject",
+            "report:R12:view", "report:R13:view", "report:R14:view",
+            "report:R15:view", "report:R16:view",
+        ],
+    },
     "Employé": {
         "description": "Peut pointer et gérer ses propres congés",
         "permissions": [
             "attendance:create", "attendance:read",
             "leave:create", "leave:read",
+            "report:R17:view", "report:R18:view", "report:R19:view", "report:R20:view",
+        ],
+    },
+    "Employé / Étudiant": {
+        "description": "Peut pointer et consulter son historique personnel (alias)",
+        "permissions": [
+            "attendance:create", "attendance:read",
+            "leave:create", "leave:read",
+            "report:R17:view", "report:R18:view", "report:R19:view", "report:R20:view",
         ],
     },
     "Superviseur": {
@@ -117,13 +180,14 @@ ROLES_DATA = {
             "attendance:read:all",
             "leave:read:all",
             "report:generate",
+            "report:R5:view", "report:R10:view", "report:R12:view",
         ],
     },
 }
 
 
 def create_permissions(db: Session) -> dict:
-    """Créer toutes les permissions"""
+    """Créer toutes les permissions (fusionnées des deux scripts)"""
     print("\n📋 Création des permissions...")
     permissions = {}
     
@@ -134,15 +198,17 @@ def create_permissions(db: Session) -> dict:
             db.add(perm)
             db.flush()
             print(f"  ✓ Permission créée: {perm.name}")
+        else:
+            print(f"  ℹ Permission existante: {perm.name}")
         permissions[perm.name] = perm
     
     db.commit()
-    print(f"✅ {len(permissions)} permissions créées")
+    print(f"✅ {len(permissions)} permissions traitées")
     return permissions
 
 
 def create_roles(db: Session, permissions: dict) -> dict:
-    """Créer tous les rôles avec leurs permissions"""
+    """Créer tous les rôles avec leurs permissions (fusionnés des deux scripts)"""
     print("\n👥 Création des rôles...")
     roles = {}
     
@@ -158,10 +224,24 @@ def create_roles(db: Session, permissions: dict) -> dict:
             role.permissions.extend(role_permissions)
             
             print(f"  ✓ Rôle créé: {role_name} ({len(role_permissions)} permissions)")
+        else:
+            # Mettre à jour les permissions du rôle existant
+            existing_perm_names = {p.name for p in role.permissions}
+            new_permissions = [
+                permissions[pname] 
+                for pname in role_data["permissions"] 
+                if pname in permissions and pname not in existing_perm_names
+            ]
+            if new_permissions:
+                role.permissions.extend(new_permissions)
+                print(f"  ↻ Rôle mis à jour: {role_name} (+{len(new_permissions)} permissions)")
+            else:
+                print(f"  ℹ Rôle existant: {role_name}")
+        
         roles[role_name] = role
     
     db.commit()
-    print(f"✅ {len(roles)} rôles créés")
+    print(f"✅ {len(roles)} rôles traités")
     return roles
 
 
@@ -197,10 +277,12 @@ def create_organizations(db: Session) -> list:
             db.add(org)
             db.flush()
             print(f"  ✓ Organisation créée: {org.name}")
+        else:
+            print(f"  ℹ Organisation existante: {org.name}")
         organizations.append(org)
     
     db.commit()
-    print(f"✅ {len(organizations)} organisations créées")
+    print(f"✅ {len(organizations)} organisations traitées")
     return organizations
 
 
@@ -232,10 +314,12 @@ def create_sites(db: Session, organizations: list) -> list:
                     db.add(site)
                     db.flush()
                     print(f"  ✓ Site créé: {site.name}")
+                else:
+                    print(f"  ℹ Site existant: {site.name}")
                 sites.append(site)
     
     db.commit()
-    print(f"✅ {len(sites)} sites créés")
+    print(f"✅ {len(sites)} sites traités")
     return sites
 
 
@@ -263,10 +347,12 @@ def create_departments(db: Session, sites: list) -> list:
                     db.add(dept)
                     db.flush()
                     print(f"  ✓ Département créé: {dept_name} @ {site.name}")
+                else:
+                    print(f"  ℹ Département existant: {dept_name} @ {site.name}")
                 departments.append(dept)
     
     db.commit()
-    print(f"✅ {len(departments)} départements créés")
+    print(f"✅ {len(departments)} départements traités")
     return departments
 
 
@@ -309,9 +395,12 @@ def create_users_and_employees(db: Session, organizations: list, sites: list, de
             organization_id=organizations[0].id
         )
         db.add(admin)
-        admin.roles.append(roles["Super Administrateur"])
+        admin.roles.append(roles.get("Super Administrateur") or roles.get("Administrateur système"))
         db.flush()
         print(f"  ✓ Super Admin créé: admin@kuilinga.com")
+        users.append(admin)
+    else:
+        print(f"  ℹ Super Admin existant: admin@kuilinga.com")
         users.append(admin)
     
     # Créer des utilisateurs/employés pour chaque département
@@ -344,11 +433,11 @@ def create_users_and_employees(db: Session, organizations: list, sites: list, de
                 
                 # Assigner un rôle
                 if i == 0:  # Premier employé = Manager
-                    user.roles.append(roles["Manager"])
+                    user.roles.append(roles.get("Manager") or roles.get("Manager de département"))
                 elif "RH" in dept.name or "Ressources Humaines" in dept.name:
-                    user.roles.append(roles["Administrateur RH"])
+                    user.roles.append(roles.get("Administrateur RH") or roles.get("Manager / Responsable RH"))
                 else:
-                    user.roles.append(roles["Employé"])
+                    user.roles.append(roles.get("Employé") or roles.get("Employé / Étudiant"))
                 
                 users.append(user)
             
@@ -379,8 +468,8 @@ def create_users_and_employees(db: Session, organizations: list, sites: list, de
                 employee_counter += 1
     
     db.commit()
-    print(f"✅ {len(users)} utilisateurs créés")
-    print(f"✅ {len(employees)} employés créés")
+    print(f"✅ {len(users)} utilisateurs traités")
+    print(f"✅ {len(employees)} employés traités")
     return users, employees
 
 
@@ -413,7 +502,7 @@ def create_devices(db: Session, organizations: list, sites: list) -> list:
                 device_counter += 1
     
     db.commit()
-    print(f"✅ {len(devices)} dispositifs créés")
+    print(f"✅ {len(devices)} dispositifs traités")
     return devices
 
 
