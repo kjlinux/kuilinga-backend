@@ -1,4 +1,4 @@
-from .attendance import Attendance
+from .attendance import Attendance, AttendanceType
 from .department import Department
 from .device import Device
 from .employee import Employee
