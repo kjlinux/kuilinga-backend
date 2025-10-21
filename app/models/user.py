@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Boolean, ForeignKey
+from sqlalchemy import Column, String, Boolean, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from .base import BaseModel
 from .role import user_roles
@@ -11,6 +11,9 @@ class User(BaseModel):
     email = Column(String, unique=True, index=True, nullable=False)
     phone = Column(String, unique=True, index=True, nullable=True)
     hashed_password = Column(String, nullable=False)
+    profile_picture_url = Column(String, nullable=True)
+    password_reset_token = Column(String, nullable=True)
+    password_reset_token_expires_at = Column(DateTime, nullable=True)
     is_active = Column(Boolean(), default=True)
     is_superuser = Column(Boolean(), default=False)
 

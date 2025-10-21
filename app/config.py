@@ -32,10 +32,10 @@ class Settings(BaseSettings):
     ] # type: ignore
     
     # Email
-    SMTP_HOST: Optional[str] = None
-    SMTP_PORT: Optional[int] = 587
-    SMTP_USER: Optional[str] = None
-    SMTP_PASSWORD: Optional[str] = None
+    EMAIL_HOST: Optional[str] = None
+    EMAIL_PORT: Optional[int] = 587
+    EMAIL_HOST_USER: Optional[str] = None
+    EMAIL_HOST_PASSWORD: Optional[str] = None
     EMAILS_FROM_EMAIL: Optional[str] = None
     EMAILS_FROM_NAME: Optional[str] = "KUILINGA"
     

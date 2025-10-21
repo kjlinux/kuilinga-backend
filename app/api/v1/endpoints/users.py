@@ -17,11 +17,12 @@ def read_users(
     db: Session = Depends(get_db),
     skip: int = Query(0, description="Nombre d'utilisateurs à sauter"),
     limit: int = Query(100, description="Nombre maximum d'utilisateurs à retourner"),
+    include_inactive: bool = Query(False, description="Inclure les utilisateurs inactifs dans les résultats"),
 ) -> Any:
     """
     Retrieve users.
     """
-    user_data = crud.user.get_multi(db, skip=skip, limit=limit)
+    user_data = crud.user.get_multi(db, skip=skip, limit=limit, include_inactive=include_inactive)
     return {
         "items": user_data["items"],
         "total": user_data["total"],
@@ -53,6 +54,9 @@ def create_user(
         )
     user = crud.user.create(db=db, obj_in=user_in)
     # Note: Role assignment should happen via the /roles/{role_id}/users/{user_id} endpoint.
+    from app.utils.email import send_new_user_email
+    token = crud.user.set_password_reset_token(db=db, user=user)
+    send_new_user_email(to_email=user.email, token=token)
     return user
 
 @router.get(
@@ -95,25 +99,48 @@ def update_user(
     user = crud.user.update(db=db, db_obj=user, obj_in=user_in)
     return user
 
-@router.delete(
-    "/{user_id}",
+@router.post(
+    "/{user_id}/deactivate",
     response_model=schemas.User,
-    summary="Supprimer un utilisateur",
-    dependencies=[Depends(PermissionChecker(["user:delete"]))],
+    summary="Désactiver un utilisateur",
+    dependencies=[Depends(PermissionChecker(["user:deactivate"]))],
 )
-def delete_user(
+def deactivate_user(
     *,
     db: Session = Depends(get_db),
     user_id: str,
 ) -> Any:
     """
-    Delete a user.
+    Deactivate a user.
     """
     user = crud.user.get(db=db, id=user_id)
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Utilisateur non trouvé")
-    deleted_user = crud.user.remove(db=db, id=user_id)
-    return deleted_user
+    user_update = schemas.UserUpdate(is_active=False)
+    user = crud.user.update(db=db, db_obj=user, obj_in=user_update)
+    return user
+
+
+@router.post(
+    "/{user_id}/activate",
+    response_model=schemas.User,
+    summary="Activer un utilisateur",
+    dependencies=[Depends(PermissionChecker(["user:activate"]))],
+)
+def activate_user(
+    *,
+    db: Session = Depends(get_db),
+    user_id: str,
+) -> Any:
+    """
+    Activate a user.
+    """
+    user = crud.user.get(db=db, id=user_id)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Utilisateur non trouvé")
+    user_update = schemas.UserUpdate(is_active=True)
+    user = crud.user.update(db=db, db_obj=user, obj_in=user_update)
+    return user
 
 @router.post(
     "/{user_id}/roles/{role_id}",

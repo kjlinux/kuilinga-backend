@@ -1,5 +1,7 @@
 from typing import Any, Dict, Optional, Union
 from sqlalchemy.orm import Session
+import secrets
+from datetime import datetime, timedelta
 from app.crud.base import CRUDBase
 from app.models.user import User
 from app.models.role import Role
@@ -48,5 +50,26 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
 
     def count_by_organization(self, db: Session, *, organization_id: str) -> int:
         return db.query(self.model).filter(User.organization_id == organization_id).count()
+
+    def get_multi(
+        self, db: Session, *, skip: int = 0, limit: int = 100, include_inactive: bool = False
+    ) -> Dict[str, Any]:
+        query = db.query(self.model)
+        if not include_inactive:
+            query = query.filter(User.is_active == True)
+
+        total = query.count()
+        items = query.order_by(self.model.id).offset(skip).limit(limit).all()
+        return {"items": items, "total": total}
+
+    def set_password_reset_token(self, db: Session, *, user: User) -> str:
+        token = secrets.token_urlsafe(32)
+        expires_at = datetime.utcnow() + timedelta(hours=1)
+        user.password_reset_token = token
+        user.password_reset_token_expires_at = expires_at
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        return token
 
 user = CRUDUser(User)

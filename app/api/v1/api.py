@@ -14,6 +14,7 @@ from app.api.v1.endpoints import (
     sites,
     leaves,
     dashboard,
+    profile,
 )
 
 # Router principal v1
@@ -102,4 +103,10 @@ api_router.include_router(
     dashboard.router,
     prefix="/dashboard",
     tags=["Dashboard"]
+)
+
+api_router.include_router(
+    profile.router,
+    prefix="/profile",
+    tags=["Profil Utilisateur"]
 )

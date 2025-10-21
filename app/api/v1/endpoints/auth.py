@@ -78,3 +78,36 @@ def refresh_access_token(
 )
 def read_users_me(current_user: models.user = Depends(get_current_active_user)):
     return current_user
+
+@router.post(
+    "/set-initial-password",
+    response_model=schemas.User,
+    summary="Définir le mot de passe initial",
+    description="Permet à un nouvel utilisateur de définir son mot de passe en utilisant un jeton à usage unique.",
+    responses={
+        400: {"description": "Jeton invalide ou expiré"},
+    },
+)
+def set_initial_password(
+    *,
+    db: Session = Depends(get_db),
+    password_in: schemas.auth.SetInitialPassword,
+):
+    from app.crud import user as crud_user
+    from datetime import datetime
+
+    user = db.query(models.User).filter(models.User.password_reset_token == password_in.token).first()
+
+    if not user or user.password_reset_token_expires_at < datetime.utcnow():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Jeton invalide ou expiré",
+        )
+
+    user_update = schemas.UserUpdate(
+        password=password_in.new_password,
+        password_reset_token=None,
+        password_reset_token_expires_at=None,
+    )
+    user = crud_user.update(db=db, db_obj=user, obj_in=user_update)
+    return user

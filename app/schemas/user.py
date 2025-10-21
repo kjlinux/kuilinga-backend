@@ -8,6 +8,7 @@ class UserBase(BaseModel):
     full_name: Optional[str] = Field(None, example="John Doe")
     phone_number: Optional[str] = Field(None, example="+1234567890")
     organization_id: Optional[str] = Field(None, example="org_a3a2e3a4-5b6c-7d8e-9f0a-1b2c3d4e5f67")
+    profile_picture_url: Optional[str] = Field(None, example="https://example.com/profile.jpg")
 
 # Propriétés pour la création d'un utilisateur
 class UserCreate(UserBase):
@@ -20,6 +21,18 @@ class UserUpdate(BaseModel):
     phone_number: Optional[str] = Field(None, example="+1987654321")
     password: Optional[str] = Field(None, min_length=8, example="new_strong_password")
     is_active: Optional[bool] = None
+    profile_picture_url: Optional[str] = Field(None, example="https://example.com/profile.jpg")
+    password_reset_token: Optional[str] = None
+    password_reset_token_expires_at: Optional[str] = None
+
+class UserUpdateProfile(BaseModel):
+    full_name: Optional[str] = Field(None, example="John A. Doe")
+    phone_number: Optional[str] = Field(None, example="+1987654321")
+    email: Optional[EmailStr] = Field(None, example="johndoe_new@example.com")
+
+class UserUpdatePassword(BaseModel):
+    current_password: str = Field(..., min_length=8, example="strongpassword123")
+    new_password: str = Field(..., min_length=8, example="new_strong_password")
 
 # Propriétés à retourner via l'API (inclut maintenant les rôles)
 class User(UserBase):

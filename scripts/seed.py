@@ -12,6 +12,13 @@ PERMISSIONS = [
     {"name": "department:read", "description": "Lire les départements"},
     {"name": "department:update", "description": "Mettre à jour un département"},
     {"name": "department:delete", "description": "Supprimer un département"},
+    # Permissions pour les utilisateurs
+    {"name": "user:create", "description": "Créer un utilisateur"},
+    {"name": "user:read", "description": "Lire les utilisateurs"},
+    {"name": "user:update", "description": "Mettre à jour un utilisateur"},
+    {"name": "user:assign_role", "description": "Assigner un rôle à un utilisateur"},
+    {"name": "user:activate", "description": "Activer un utilisateur"},
+    {"name": "user:deactivate", "description": "Désactiver un utilisateur"},
     # Permissions pour les rôles
     {"name": "role:create", "description": "Créer un rôle"},
     {"name": "role:read", "description": "Lire les rôles"},

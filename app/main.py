@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.exc import SQLAlchemyError
 import time
 from app.config import settings
@@ -95,6 +96,9 @@ def root():
 
 # Inclure les routes API v1
 app.include_router(api_router, prefix=settings.API_V1_PREFIX)
+
+# Monter le répertoire statique
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 from app.services.mqtt_client import mqtt_client
