@@ -1,7 +1,7 @@
 """
 Script complet pour peupler la base de données avec des données réalistes
 Crée: Organizations, Sites, Departments, Users, Roles, Permissions, Employees, Devices, Attendances, Leaves
-Inclut toutes les permissions de seed.py et seed_data.py
+Inclut toutes les permissions de seed.py et seed_data.py (fusionnées)
 """
 import sys
 from pathlib import Path
@@ -25,7 +25,7 @@ from app.models.role import Role, Permission
 from app.core.security import get_password_hash
 
 
-# ==================== PERMISSIONS (FUSIONNÉES) ====================
+# ==================== PERMISSIONS (COMPLÈTEMENT FUSIONNÉES) ====================
 PERMISSIONS_DATA = [
     # User management
     {"name": "user:create", "description": "Créer un utilisateur"},
@@ -76,9 +76,11 @@ PERMISSIONS_DATA = [
     {"name": "device:update", "description": "Mettre à jour un appareil"},
     {"name": "device:delete", "description": "Supprimer un appareil"},
     
-    # Reports - From seed.py (R1-R20)
+    # Reports - General
     {"name": "report:generate", "description": "Générer des rapports"},
     {"name": "report:export", "description": "Exporter des rapports"},
+    
+    # Reports - Specific (R1-R20 from seed.py)
     {"name": "report:R1:view", "description": "Voir le rapport consolidé multi-organisations"},
     {"name": "report:R2:view", "description": "Voir l'analyse comparative inter-organisations"},
     {"name": "report:R3:view", "description": "Voir le rapport d'utilisation des devices"},
@@ -101,14 +103,14 @@ PERMISSIONS_DATA = [
     {"name": "report:R20:view", "description": "Voir son attestation de présence"},
 ]
 
-# ==================== ROLES (FUSIONNÉS) ====================
+# ==================== ROLES (COMPLÈTEMENT FUSIONNÉS) ====================
 ROLES_DATA = {
     "Super Administrateur": {
         "description": "Accès complet à toutes les fonctionnalités du système",
         "permissions": [p["name"] for p in PERMISSIONS_DATA],
     },
     "Administrateur système": {
-        "description": "Accès complet à toutes les fonctionnalités du système (alias)",
+        "description": "Accès complet à toutes les fonctionnalités du système",
         "permissions": [p["name"] for p in PERMISSIONS_DATA],
     },
     "Administrateur RH": {
@@ -166,7 +168,7 @@ ROLES_DATA = {
         ],
     },
     "Employé / Étudiant": {
-        "description": "Peut pointer et consulter son historique personnel (alias)",
+        "description": "Peut pointer et consulter son historique personnel",
         "permissions": [
             "attendance:create", "attendance:read",
             "leave:create", "leave:read",
