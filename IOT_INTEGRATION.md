@@ -15,8 +15,8 @@ La transmission des données de pointage peut se faire de deux manières :
 
 L'authentification et l'identification des appareils sont gérées différemment selon le protocole utilisé :
 
--   **Pour HTTP**, la sécurité est assurée par un **jeton d'accès (API Key ou JWT)** qui doit être inclus dans l'en-tête de chaque requête. De plus, l'API est protégée par des permissions granulaires (par exemple, `attendance:create`).
--   **Pour MQTT**, l'identification de l'appareil est basée sur le **numéro de série** inclus dans le sujet MQTT (`kuilinga/devices/{device_serial}/attendance`). La sécurité du broker (authentification et chiffrement TLS) est configurée au niveau de l'infrastructure.
+- **Pour HTTP**, la sécurité est assurée par un **jeton d'accès (API Key ou JWT)** qui doit être inclus dans l'en-tête de chaque requête. De plus, l'API est protégée par des permissions granulaires (par exemple, `attendance:create`).
+- **Pour MQTT**, l'identification de l'appareil est basée sur le **numéro de série** inclus dans le sujet MQTT (`kuilinga/devices/{device_serial}/attendance`). La sécurité du broker (authentification et chiffrement TLS) est configurée au niveau de l'infrastructure.
 
 Ci-dessous, les détails techniques pour chaque méthode.
 
@@ -26,15 +26,15 @@ Cette méthode consiste à envoyer les données de pointage via une requête HTT
 
 ### Point de terminaison (Endpoint)
 
--   **URL** : `/api/v1/attendances/`
--   **Méthode** : `POST`
+- **URL** : `/api/v1/attendances/`
+- **Méthode** : `POST`
 
 ### En-têtes (Headers)
 
 Chaque requête doit inclure les en-têtes suivants pour l'authentification et la spécification du contenu :
 
--   `Content-Type`: `application/json`
--   `Authorization`: `Bearer <VOTRE_JETON_JWT>`
+- `Content-Type`: `application/json`
+- `Authorization`: `Bearer <VOTRE_JETON_JWT>`
 
 Le jeton JWT doit être obtenu par un utilisateur ou un service disposant de la permission `attendance:create`.
 
@@ -53,12 +53,12 @@ Le corps de la requête doit être un objet JSON contenant les informations du p
 
 ### Description des Champs
 
-| Champ         | Type   | Obligatoire | Description                                                                                                                               |
-|---------------|--------|-------------|-------------------------------------------------------------------------------------------------------------------------------------------|
-| `timestamp`   | string | Oui         | La date et l'heure du pointage au format ISO 8601 (UTC).                                                                                    |
-| `type`        | string | Oui         | Le type de pointage. Doit être soit `"in"` (entrée) soit `"out"` (sortie).                                                                 |
-| `employee_id` | string | Oui         | L'identifiant unique (UUID) de l'employé associé au badge scanné.                                                                           |
-| `device_id`   | string | Oui         | L'identifiant unique (UUID) de l'appareil qui a enregistré le pointage.                                                                     |
+| Champ         | Type   | Obligatoire | Description                                                                |
+| ------------- | ------ | ----------- | -------------------------------------------------------------------------- |
+| `timestamp`   | string | Oui         | La date et l'heure du pointage au format ISO 8601 (UTC).                   |
+| `type`        | string | Oui         | Le type de pointage. Doit être soit `"in"` (entrée) soit `"out"` (sortie). |
+| `employee_id` | string | Oui         | L'identifiant unique (UUID) de l'employé associé au badge scanné.          |
+| `device_id`   | string | Oui         | L'identifiant unique (UUID) de l'appareil qui a enregistré le pointage.    |
 
 ### Exemple de Commande `curl`
 
@@ -78,8 +78,8 @@ curl -X POST "http://votre-domaine.com/api/v1/attendances/" \
 
 ### Réponse de l'API
 
--   **En cas de succès (Code `201 Created`)** : L'API retourne l'objet du pointage nouvellement créé, incluant les détails de l'employé, du site, etc.
--   **En cas d'erreur (Codes `4xx`)** : L'API retourne un message d'erreur détaillé, par exemple si l'employé ou l'appareil n'est pas trouvé, ou si les données sont invalides.
+- **En cas de succès (Code `201 Created`)** : L'API retourne l'objet du pointage nouvellement créé, incluant les détails de l'employé, du site, etc.
+- **En cas d'erreur (Codes `4xx`)** : L'API retourne un message d'erreur détaillé, par exemple si l'employé ou l'appareil n'est pas trouvé, ou si les données sont invalides.
 
 ## Méthode 2 : Intégration via MQTT
 
@@ -87,16 +87,16 @@ Le protocole MQTT est idéal pour les communications en temps réel et les envir
 
 ### Paramètres du Broker MQTT
 
--   **Hôte** : `mqtt.votre-domaine.com` (à remplacer par l'adresse de votre broker)
--   **Port** : `1883` (port standard non chiffré) ou `8883` (pour une connexion TLS)
--   **Authentification** : Nom d'utilisateur et mot de passe (si configurés sur le broker)
--   **TLS** : Recommandé pour la production
+- **Hôte** : `mqtt.votre-domaine.com` (à remplacer par l'adresse du broker HiveMQ)
+- **Port** : `1883` (port standard non chiffré) ou `8883` (pour une connexion TLS)
+- **Authentification** : Nom d'utilisateur et mot de passe (Ils seront configurés sur le broker)
+- **TLS** : Recommandé pour la production
 
 ### Sujet (Topic) MQTT
 
 Les appareils doivent publier les messages de pointage sur un sujet dynamique qui inclut leur propre numéro de série.
 
--   **Structure du sujet** : `kuilinga/devices/{device_serial}/attendance`
+- **Structure du sujet** : `kuilinga/devices/{device_serial}/attendance`
 
 Où `{device_serial}` doit être remplacé par le numéro de série unique de l'appareil IoT. Par exemple, pour un appareil avec le numéro de série `DEV-00123`, le sujet sera :
 
@@ -116,11 +116,11 @@ Le message publié doit être un objet JSON contenant les informations du pointa
 
 ### Description des Champs
 
-| Champ       | Type   | Obligatoire | Description                                                                   |
-|-------------|--------|-------------|-------------------------------------------------------------------------------|
-| `timestamp` | string | Oui         | La date et l'heure du pointage au format ISO 8601 (UTC).                        |
-| `type`      | string | Oui         | Le type de pointage : `"in"` ou `"out"`.                                        |
-| `badge_id`  | string | Oui         | L'identifiant unique du badge présenté par l'employé.                           |
+| Champ       | Type   | Obligatoire | Description                                              |
+| ----------- | ------ | ----------- | -------------------------------------------------------- |
+| `timestamp` | string | Oui         | La date et l'heure du pointage au format ISO 8601 (UTC). |
+| `type`      | string | Oui         | Le type de pointage : `"in"` ou `"out"`.                 |
+| `badge_id`  | string | Oui         | L'identifiant unique du badge présenté par l'employé.    |
 
 ### Logique de Traitement
 

@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(tree:*)",
+      "Bash(awk:*)",
+      "Bash(find:*)",
+      "Bash(pip install:*)",
+      "Bash(python -m pip install:*)",
+      "Bash(Select-Object -First 100)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
