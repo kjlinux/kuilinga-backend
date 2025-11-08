@@ -6,7 +6,17 @@
       "Bash(find:*)",
       "Bash(pip install:*)",
       "Bash(python -m pip install:*)",
-      "Bash(Select-Object -First 100)"
+      "Bash(Select-Object -First 100)",
+      "Bash(python:*)",
+      "Bash(venv\\Scripts\\python:*)",
+      "Bash(venv\\Scripts\\python.exe:*)",
+      "Bash(./venv/Scripts/python.exe:*)",
+      "Bash(alembic revision:*)",
+      "Bash(venv\\Scripts\\python.exe -m alembic revision:*)",
+      "Bash(netstat:*)",
+      "Bash(curl:*)",
+      "Bash(bash test_logout.sh:*)",
+      "Bash(bash test_refresh_blocked.sh:*)"
     ],
     "deny": [],
     "ask": []

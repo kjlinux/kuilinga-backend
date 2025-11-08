@@ -98,6 +98,7 @@ app.include_router(api_router, prefix=settings.API_V1_PREFIX)
 
 
 from app.services.mqtt_client import mqtt_client
+from app.services.token_cleanup import token_cleanup_service
 
 # Événement de démarrage
 @app.on_event("startup")
@@ -110,6 +111,8 @@ async def startup_event():
     print(f"Mode Debug: {settings.DEBUG}")
     # Démarrer le client MQTT
     mqtt_client.start()
+    # Démarrer le service de nettoyage des tokens expirés
+    token_cleanup_service.start()
 
 
 # Événement d'arrêt
@@ -120,4 +123,6 @@ async def shutdown_event():
     """
     # Arrêter le client MQTT
     mqtt_client.stop()
+    # Arrêter le service de nettoyage des tokens
+    await token_cleanup_service.stop()
     print(f"{settings.PROJECT_NAME} arrêté")

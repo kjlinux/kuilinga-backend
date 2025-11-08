@@ -21,7 +21,6 @@ bcrypt
 paho-mqtt
 
 # Report Generation & Data Processing
-weasyprint
 pandas
 openpyxl
 jinja2

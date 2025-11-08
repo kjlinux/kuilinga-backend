@@ -1,4 +1,5 @@
 from .attendance import Attendance, AttendanceType
+from .blacklisted_token import BlacklistedToken
 from .department import Department
 from .device import Device
 from .employee import Employee

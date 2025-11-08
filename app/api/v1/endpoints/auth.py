@@ -1,9 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from app import models, schemas
 from app.core import security
 from app.dependencies import get_current_active_user, get_db
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 router = APIRouter()
 
@@ -68,6 +70,7 @@ def refresh_access_token(
         "access_token": access_token,
         "refresh_token": new_refresh_token,
         "token_type": "bearer",
+        "user": user,
     }
 
 @router.get(
@@ -78,3 +81,55 @@ def refresh_access_token(
 )
 def read_users_me(current_user: models.user = Depends(get_current_active_user)):
     return current_user
+
+
+@router.post(
+    "/logout",
+    status_code=status.HTTP_200_OK,
+    summary="Déconnexion utilisateur",
+    description="Invalide le token d'accès et le refresh token de l'utilisateur. Les tokens sont ajoutés à une blacklist pour empêcher leur réutilisation.",
+    responses={
+        200: {"description": "Déconnexion réussie"},
+        401: {"description": "Token invalide ou manquant"},
+    },
+)
+def logout(
+    db: Session = Depends(get_db),
+    token: str = Depends(oauth2_scheme),
+    current_user: models.User = Depends(get_current_active_user),
+    refresh_token_data: schemas.RefreshTokenRequest = None,
+):
+    """
+    Déconnecte l'utilisateur en blacklistant son access token et son refresh token.
+
+    - **access_token**: Automatiquement extrait du header Authorization
+    - **refresh_token**: Optionnel, à envoyer dans le corps de la requête
+
+    Les deux tokens sont ajoutés à la blacklist pour empêcher leur réutilisation.
+    Le frontend doit également supprimer les tokens stockés localement.
+    """
+    try:
+        # Blacklist l'access token
+        access_blacklisted = security.blacklist_token(db, token, current_user.id)
+
+        # Blacklist le refresh token si fourni
+        refresh_blacklisted = False
+        if refresh_token_data and refresh_token_data.refresh_token:
+            refresh_blacklisted = security.blacklist_token(
+                db,
+                refresh_token_data.refresh_token,
+                current_user.id
+            )
+
+        return {
+            "message": "Déconnexion réussie",
+            "access_token_revoked": access_blacklisted,
+            "refresh_token_revoked": refresh_blacklisted if refresh_token_data else None
+        }
+    except Exception as e:
+        # En cas d'erreur, on retourne quand même un succès
+        # car le plus important est que le frontend supprime les tokens
+        return {
+            "message": "Déconnexion réussie (locale uniquement)",
+            "warning": "Les tokens n'ont pas pu être invalidés côté serveur"
+        }

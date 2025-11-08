@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app import crud, models
 from app.config import settings
+from app.crud.blacklisted_token import blacklisted_token
 
 # Configuration du hashing de mots de passe
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -62,20 +63,25 @@ def create_refresh_token(data: dict) -> str:
     return encoded_jwt
 
 
-def decode_token(token: str) -> dict:
+def decode_token(token: str, db: Optional[Session] = None) -> dict:
     """
     Décode et vérifie un token JWT
-    
+
     Args:
         token: Token JWT à décoder
-    
+        db: Session de la base de données (optionnel, pour vérifier la blacklist)
+
     Returns:
         Payload du token décodé
-    
+
     Raises:
-        JWTError: Si le token est invalide
+        JWTError: Si le token est invalide ou blacklisté
     """
     try:
+        # Vérifier si le token est blacklisté (si db session est fournie)
+        if db and blacklisted_token.is_blacklisted(db, token):
+            raise JWTError("Token has been revoked")
+
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         return payload
     except JWTError:
@@ -100,3 +106,66 @@ def authenticate_user(db: Session, email: str, password: str) -> Optional[models
     if not verify_password(password, user.hashed_password):
         return None
     return user
+
+
+def get_user_from_refresh_token(db: Session, token: str) -> Optional[models.User]:
+    """
+    Récupère un utilisateur à partir d'un refresh token.
+
+    Args:
+        db: Session de la base de données.
+        token: Refresh token JWT.
+
+    Returns:
+        L'objet utilisateur si le token est valide, sinon None.
+    """
+    try:
+        payload = decode_token(token, db)
+
+        # Vérifier que c'est bien un refresh token
+        if payload.get("type") != "refresh":
+            return None
+
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            return None
+
+        user = crud.user.get(db, id=user_id)
+        return user
+    except JWTError:
+        return None
+
+
+def blacklist_token(db: Session, token: str, user_id: Optional[str] = None) -> bool:
+    """
+    Ajoute un token à la blacklist.
+
+    Args:
+        db: Session de la base de données
+        token: Le token JWT à blacklister
+        user_id: ID de l'utilisateur (optionnel)
+
+    Returns:
+        True si le token a été blacklisté avec succès, False sinon
+    """
+    try:
+        # Décoder le token pour obtenir sa date d'expiration
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        exp = payload.get("exp")
+
+        if exp is None:
+            return False
+
+        # Convertir le timestamp en datetime
+        expires_at = datetime.fromtimestamp(exp, tz=timezone.utc)
+
+        # Ajouter à la blacklist
+        blacklisted_token.create(
+            db,
+            token=token,
+            expires_at=expires_at,
+            user_id=user_id
+        )
+        return True
+    except (JWTError, Exception):
+        return False
