@@ -17,11 +17,21 @@ def read_users(
     db: Session = Depends(get_db),
     skip: int = Query(0, description="Nombre d'utilisateurs à sauter"),
     limit: int = Query(100, description="Nombre maximum d'utilisateurs à retourner"),
+    search: str = Query(None, description="Recherche textuelle (email, nom complet)"),
+    sort_by: str = Query(None, description="Champ de tri (email, full_name, created_at, updated_at)"),
+    sort_order: str = Query("asc", description="Direction du tri (asc ou desc)"),
 ) -> Any:
     """
     Retrieve users.
     """
-    user_data = crud.user.get_multi(db, skip=skip, limit=limit)
+    user_data = crud.user.get_multi_paginated(
+        db,
+        skip=skip,
+        limit=limit,
+        search=search,
+        sort_by=sort_by,
+        sort_order=sort_order
+    )
     return {
         "items": user_data["items"],
         "total": user_data["total"],

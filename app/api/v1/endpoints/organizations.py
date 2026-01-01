@@ -30,9 +30,19 @@ def read_organizations(
     db: Session = Depends(get_db),
     skip: int = Query(0, description="Nombre d'organisations à sauter"),
     limit: int = Query(100, description="Nombre maximum d'organisations à retourner"),
+    search: str = Query(None, description="Recherche textuelle (nom, adresse, email, téléphone)"),
+    sort_by: str = Query(None, description="Champ de tri (name, address, contact_email, contact_phone, created_at, updated_at)"),
+    sort_order: str = Query("asc", description="Direction du tri (asc ou desc)"),
     current_user: models.User = Depends(require_role("admin")),
 ) -> Any:
-    organization_data = crud.organization.get_multi(db, skip=skip, limit=limit)
+    organization_data = crud.organization.get_multi_paginated(
+        db,
+        skip=skip,
+        limit=limit,
+        search=search,
+        sort_by=sort_by,
+        sort_order=sort_order
+    )
 
     enriched_items = [enrich_organization_response(db, org) for org in organization_data["items"]]
 

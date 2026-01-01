@@ -31,10 +31,19 @@ def read_devices(
     db: Session = Depends(get_db),
     skip: int = Query(0, description="Nombre de terminaux à sauter"),
     limit: int = Query(100, description="Nombre maximum de terminaux à retourner"),
+    search: str = Query(None, description="Recherche textuelle (numéro de série, nom, type, localisation)"),
+    sort_by: str = Query(None, description="Champ de tri (serial_number, name, device_type, location, created_at, updated_at)"),
+    sort_order: str = Query("asc", description="Direction du tri (asc ou desc)"),
     current_user: models.User = Depends(get_current_active_user),
 ) -> Any:
-    device_data = crud.device.get_multi_paginated_by_org(
-        db, organization_id=current_user.organization_id, skip=skip, limit=limit
+    device_data = crud.device.get_multi_paginated(
+        db,
+        organization_id=current_user.organization_id,
+        skip=skip,
+        limit=limit,
+        search=search,
+        sort_by=sort_by,
+        sort_order=sort_order
     )
 
     enriched_items = [enrich_device_response(db, device) for device in device_data["items"]]

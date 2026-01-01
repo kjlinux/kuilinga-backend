@@ -18,12 +18,21 @@ def read_employees(
     organization_id: str = Query(None, description="Filtrer par ID d'organisation"),
     skip: int = Query(0, description="Nombre d'employés à sauter"),
     limit: int = Query(100, description="Nombre maximum d'employés à retourner"),
+    search: str = Query(None, description="Recherche textuelle (nom, prénom, email, badge, téléphone, poste)"),
+    sort_by: str = Query(None, description="Champ de tri (first_name, last_name, email, badge_id, position, created_at, updated_at)"),
+    sort_order: str = Query("asc", description="Direction du tri (asc ou desc)"),
 ) -> Any:
     """
     Retrieve employees with enriched data.
     """
     employee_data = crud.employee.get_multi_paginated(
-        db, skip=skip, limit=limit, organization_id=organization_id
+        db,
+        skip=skip,
+        limit=limit,
+        organization_id=organization_id,
+        search=search,
+        sort_by=sort_by,
+        sort_order=sort_order
     )
 
     return {
@@ -64,3 +73,82 @@ def create_employee(
     enriched_employee = crud.employee.get(db, id=employee.id)
 
     return enriched_employee
+
+@router.get(
+    "/{employee_id}",
+    response_model=schemas.Employee,
+    summary="Récupérer un employé",
+    description="Récupère les détails d'un employé spécifique. Requiert la permission `employee:read`.",
+    dependencies=[Depends(PermissionChecker(["employee:read"]))],
+)
+def read_employee(
+    *,
+    db: Session = Depends(get_db),
+    employee_id: str,
+) -> Any:
+    """
+    Retrieve a specific employee by ID.
+    """
+    employee = crud.employee.get(db=db, id=employee_id)
+    if not employee:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"L'employé avec l'ID {employee_id} n'a pas été trouvé.",
+        )
+    return employee
+
+@router.put(
+    "/{employee_id}",
+    response_model=schemas.Employee,
+    summary="Mettre à jour un employé",
+    description="Met à jour les informations d'un employé existant. Requiert la permission `employee:update`.",
+    dependencies=[Depends(PermissionChecker(["employee:update"]))],
+)
+def update_employee(
+    *,
+    db: Session = Depends(get_db),
+    employee_id: str,
+    employee_in: schemas.EmployeeUpdate,
+) -> Any:
+    """
+    Update an employee.
+    """
+    employee = crud.employee.get(db=db, id=employee_id)
+    if not employee:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"L'employé avec l'ID {employee_id} n'a pas été trouvé.",
+        )
+
+    employee = crud.employee.update(db=db, db_obj=employee, obj_in=employee_in)
+
+    # Re-fetch with relationships for the response
+    db.refresh(employee)
+    enriched_employee = crud.employee.get(db, id=employee.id)
+
+    return enriched_employee
+
+@router.delete(
+    "/{employee_id}",
+    response_model=schemas.Employee,
+    summary="Supprimer un employé",
+    description="Supprime un employé. Requiert la permission `employee:delete`.",
+    dependencies=[Depends(PermissionChecker(["employee:delete"]))],
+)
+def delete_employee(
+    *,
+    db: Session = Depends(get_db),
+    employee_id: str,
+) -> Any:
+    """
+    Delete an employee.
+    """
+    employee = crud.employee.get(db=db, id=employee_id)
+    if not employee:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"L'employé avec l'ID {employee_id} n'a pas été trouvé.",
+        )
+
+    employee = crud.employee.remove(db=db, id=employee_id)
+    return employee

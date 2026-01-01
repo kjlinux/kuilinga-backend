@@ -38,8 +38,18 @@ def read_leaves(
     db: Session = Depends(get_db),
     skip: int = Query(0, description="Nombre de demandes de congé à sauter"),
     limit: int = Query(100, description="Nombre maximum de demandes de congé à retourner"),
+    search: str = Query(None, description="Recherche textuelle (type de congé, statut, raison)"),
+    sort_by: str = Query(None, description="Champ de tri (leave_type, status, start_date, end_date, created_at, updated_at)"),
+    sort_order: str = Query("asc", description="Direction du tri (asc ou desc)"),
 ) -> Any:
-    leave_data = crud.leave.get_multi_paginated(db, skip=skip, limit=limit)
+    leave_data = crud.leave.get_multi_paginated(
+        db,
+        skip=skip,
+        limit=limit,
+        search=search,
+        sort_by=sort_by,
+        sort_order=sort_order
+    )
     return {
         "items": leave_data["items"],
         "total": leave_data["total"],

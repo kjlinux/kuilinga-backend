@@ -1,6 +1,6 @@
 from typing import Dict, Any, Optional
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import func
+from sqlalchemy import func, or_, asc, desc
 from datetime import datetime, date
 from app.crud.base import CRUDBase
 from app.models.attendance import Attendance
@@ -12,7 +12,15 @@ from app.schemas.attendance import AttendanceCreate, AttendanceUpdate
 
 class CRUDAttendance(CRUDBase[Attendance, AttendanceCreate, AttendanceUpdate]):
     def get_multi_paginated(
-        self, db: Session, *, skip: int = 0, limit: int = 100, employee_id: str = None
+        self,
+        db: Session,
+        *,
+        skip: int = 0,
+        limit: int = 100,
+        employee_id: str = None,
+        search: Optional[str] = None,
+        sort_by: Optional[str] = None,
+        sort_order: Optional[str] = "asc"
     ) -> Dict[str, Any]:
 
         query = (
@@ -29,14 +37,30 @@ class CRUDAttendance(CRUDBase[Attendance, AttendanceCreate, AttendanceUpdate]):
         if employee_id:
             query = query.filter(Attendance.employee_id == employee_id)
 
+        # Search functionality (search by attendance type)
+        if search:
+            search_filter = f"%{search}%"
+            query = query.filter(
+                Attendance.type.ilike(search_filter)
+            )
+
         total = query.count()
 
-        items = (
-            query.order_by(Attendance.timestamp.desc())
-            .offset(skip)
-            .limit(limit)
-            .all()
-        )
+        # Sort functionality
+        if sort_by:
+            valid_columns = ["timestamp", "type", "created_at", "updated_at"]
+            if sort_by in valid_columns:
+                column = getattr(Attendance, sort_by)
+                if sort_order.lower() == "desc":
+                    query = query.order_by(desc(column))
+                else:
+                    query = query.order_by(asc(column))
+            else:
+                query = query.order_by(Attendance.timestamp.desc())
+        else:
+            query = query.order_by(Attendance.timestamp.desc())
+
+        items = query.offset(skip).limit(limit).all()
 
         return {"items": items, "total": total}
 

@@ -22,12 +22,21 @@ def read_attendances(
     employee_id: str = Query(None, description="Filtrer par ID d'employé"),
     skip: int = Query(0, description="Nombre de pointages à sauter"),
     limit: int = Query(100, description="Nombre maximum de pointages à retourner"),
+    search: str = Query(None, description="Recherche textuelle (type de pointage)"),
+    sort_by: str = Query(None, description="Champ de tri (timestamp, type, created_at, updated_at)"),
+    sort_order: str = Query("asc", description="Direction du tri (asc ou desc)"),
 ) -> Any:
     """
     Retrieve attendances with enriched data.
     """
     attendance_data = crud.attendance.get_multi_paginated(
-        db, skip=skip, limit=limit, employee_id=employee_id
+        db,
+        skip=skip,
+        limit=limit,
+        employee_id=employee_id,
+        search=search,
+        sort_by=sort_by,
+        sort_order=sort_order
     )
 
     # Note: The duration calculation logic will be added later.

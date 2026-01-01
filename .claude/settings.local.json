@@ -16,7 +16,9 @@
       "Bash(netstat:*)",
       "Bash(curl:*)",
       "Bash(bash test_logout.sh:*)",
-      "Bash(bash test_refresh_blocked.sh:*)"
+      "Bash(bash test_refresh_blocked.sh:*)",
+      "Bash(venvScriptspython.exe -c \"from app.main import app; print(''✓ Application loads successfully'')\")",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []

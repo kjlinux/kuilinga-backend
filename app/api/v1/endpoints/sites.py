@@ -42,8 +42,18 @@ def read_sites(
     db: Session = Depends(get_db),
     skip: int = Query(0, description="Nombre de sites à sauter"),
     limit: int = Query(100, description="Nombre maximum de sites à retourner"),
+    search: str = Query(None, description="Recherche textuelle (nom, adresse, ville, pays)"),
+    sort_by: str = Query(None, description="Champ de tri (name, address, city, country, created_at, updated_at)"),
+    sort_order: str = Query("asc", description="Direction du tri (asc ou desc)"),
 ) -> Any:
-    site_data = crud.site.get_multi_paginated(db, skip=skip, limit=limit)
+    site_data = crud.site.get_multi_paginated(
+        db,
+        skip=skip,
+        limit=limit,
+        search=search,
+        sort_by=sort_by,
+        sort_order=sort_order
+    )
 
     enriched_items = [enrich_site_response(db, site) for site in site_data["items"]]
 

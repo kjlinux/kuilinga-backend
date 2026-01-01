@@ -38,8 +38,18 @@ def read_departments(
     db: Session = Depends(get_db),
     skip: int = Query(0, description="Nombre de départements à sauter"),
     limit: int = Query(100, description="Nombre maximum de départements à retourner"),
+    search: str = Query(None, description="Recherche textuelle (nom, description)"),
+    sort_by: str = Query(None, description="Champ de tri (name, description, created_at, updated_at)"),
+    sort_order: str = Query("asc", description="Direction du tri (asc ou desc)"),
 ) -> Any:
-    department_data = crud.department.get_multi_paginated(db, skip=skip, limit=limit)
+    department_data = crud.department.get_multi_paginated(
+        db,
+        skip=skip,
+        limit=limit,
+        search=search,
+        sort_by=sort_by,
+        sort_order=sort_order
+    )
     enriched_items = [enrich_department_response(db, dept) for dept in department_data["items"]]
     return {
         "items": enriched_items,
