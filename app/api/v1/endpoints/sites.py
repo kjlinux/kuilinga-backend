@@ -109,5 +109,7 @@ def delete_site(
     site = crud.site.get(db=db, id=site_id)
     if not site:
         raise HTTPException(status_code=404, detail="Site not found")
-    site = crud.site.remove(db=db, id=site_id)
-    return enrich_site_response(db, site)
+    # Build response data while session is still active
+    response_data = enrich_site_response(db, site)
+    crud.site.remove(db=db, id=site_id)
+    return response_data

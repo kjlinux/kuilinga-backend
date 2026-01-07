@@ -81,7 +81,7 @@ class MQTTClient:
 
                 # Re-fetch with relationships for the broadcast
                 db.refresh(new_attendance)
-                enriched_attendance = crud.attendance.get(db, id=new_attendance.id)
+                enriched_attendance = crud_attendance.get(db, id=new_attendance.id)
 
                 # Diffuser le nouveau pointage via WebSocket
                 if enriched_attendance:

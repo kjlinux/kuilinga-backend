@@ -9,6 +9,10 @@ class CRUDDevice(CRUDBase[Device, DeviceCreate, DeviceUpdate]):
     def get_by_serial_number(self, db: Session, *, serial_number: str) -> Optional[Device]:
         return db.query(self.model).filter(Device.serial_number == serial_number).first()
 
+    # Alias for MQTT client compatibility
+    def get_by_serial(self, db: Session, *, serial_number: str) -> Optional[Device]:
+        return self.get_by_serial_number(db, serial_number=serial_number)
+
     def get_multi_paginated(
         self,
         db: Session,

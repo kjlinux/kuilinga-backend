@@ -87,5 +87,7 @@ def delete_permission(*, db: Session = Depends(get_db), permission_id: str):
     permission = crud.permission.get(db=db, id=permission_id)
     if not permission:
         raise HTTPException(status_code=404, detail="Permission not found")
-    permission = crud.permission.remove(db=db, id=permission_id)
-    return permission
+    # Build response data while session is still active
+    response_data = schemas.Permission.model_validate(permission)
+    crud.permission.remove(db=db, id=permission_id)
+    return response_data

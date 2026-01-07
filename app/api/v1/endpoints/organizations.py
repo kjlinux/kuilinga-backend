@@ -136,5 +136,7 @@ def delete_organization(
     if not organization:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organisation non trouvée")
 
-    deleted_organization = crud.organization.remove(db=db, id=org_id)
-    return enrich_organization_response(db, deleted_organization)
+    # Build response data while session is still active
+    response_data = enrich_organization_response(db, organization)
+    crud.organization.remove(db=db, id=org_id)
+    return response_data

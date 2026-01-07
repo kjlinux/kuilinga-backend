@@ -143,6 +143,7 @@ def delete_employee(
     """
     Delete an employee.
     """
+    # Fetch employee with relationships before deletion
     employee = crud.employee.get(db=db, id=employee_id)
     if not employee:
         raise HTTPException(
@@ -150,5 +151,10 @@ def delete_employee(
             detail=f"L'employé avec l'ID {employee_id} n'a pas été trouvé.",
         )
 
-    employee = crud.employee.remove(db=db, id=employee_id)
-    return employee
+    # Build response data while session is still active
+    response_data = schemas.Employee.model_validate(employee)
+
+    # Now delete the employee
+    crud.employee.remove(db=db, id=employee_id)
+
+    return response_data

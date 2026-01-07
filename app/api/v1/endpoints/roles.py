@@ -108,5 +108,7 @@ def delete_role(*, db: Session = Depends(get_db), role_id: str):
     role = crud.role.get(db=db, id=role_id)
     if not role:
         raise HTTPException(status_code=404, detail="Role not found")
-    role = crud.role.remove(db=db, id=role_id)
-    return role
+    # Build response data while session is still active
+    response_data = schemas.Role.model_validate(role)
+    crud.role.remove(db=db, id=role_id)
+    return response_data

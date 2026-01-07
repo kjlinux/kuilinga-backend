@@ -122,8 +122,10 @@ def delete_user(
     user = crud.user.get(db=db, id=user_id)
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Utilisateur non trouvé")
-    deleted_user = crud.user.remove(db=db, id=user_id)
-    return deleted_user
+    # Build response data while session is still active
+    response_data = schemas.User.model_validate(user)
+    crud.user.remove(db=db, id=user_id)
+    return response_data
 
 @router.post(
     "/{user_id}/roles/{role_id}",

@@ -11,6 +11,25 @@ from app.db.session import engine, Base
 # Créer les tables (en développement - en production utiliser Alembic)
 Base.metadata.create_all(bind=engine)
 
+# Métadonnées des tags pour la documentation OpenAPI
+tags_metadata = [
+    {"name": "Authentification", "description": "Endpoints pour l'authentification JWT (login, refresh, logout)"},
+    {"name": "Utilisateurs", "description": "Gestion des comptes utilisateurs et leurs rôles"},
+    {"name": "Organisations", "description": "Gestion des organisations (tenants) du système"},
+    {"name": "Employés", "description": "Gestion des employés, leurs profils et affectations"},
+    {"name": "Devices IoT", "description": "Gestion des terminaux de pointage connectés"},
+    {"name": "Pointages", "description": "Enregistrement et consultation des entrées/sorties"},
+    {"name": "Rapports", "description": "Génération de rapports PDF, Excel et CSV"},
+    {"name": "Départements", "description": "Gestion des départements au sein des organisations"},
+    {"name": "Rôles & Permissions", "description": "Gestion du contrôle d'accès basé sur les rôles (RBAC)"},
+    {"name": "WebSockets", "description": "Connexions temps réel pour les mises à jour en direct"},
+    {"name": "Sites", "description": "Gestion des sites/localisations des organisations"},
+    {"name": "Leaves", "description": "Gestion des congés et absences des employés"},
+    {"name": "Dashboard", "description": "Statistiques et métriques pour les tableaux de bord"},
+    {"name": "Health", "description": "Vérification de l'état de santé de l'API"},
+    {"name": "Root", "description": "Point d'entrée de l'API"},
+]
+
 # Initialiser l'application FastAPI
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -19,6 +38,7 @@ app = FastAPI(
     openapi_url=f"{settings.API_V1_PREFIX}/openapi.json",
     docs_url="/docs",
     redoc_url="/redoc",
+    openapi_tags=tags_metadata,
 )
 
 # Configuration CORS

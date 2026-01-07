@@ -112,7 +112,8 @@ def delete_leave(
     if not leave:
         raise HTTPException(status_code=404, detail="Leave request not found")
 
-    # We need to load relations before deleting to return them
+    # Build response data while session is still active
     db.refresh(leave, ["employee.department", "approver"])
+    response_data = schemas.Leave.model_validate(leave)
     crud.leave.remove(db=db, id=leave_id)
-    return leave
+    return response_data

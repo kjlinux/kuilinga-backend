@@ -6,6 +6,10 @@ from app.models.employee import Employee
 from app.schemas.employee import EmployeeCreate, EmployeeUpdate
 
 class CRUDEmployee(CRUDBase[Employee, EmployeeCreate, EmployeeUpdate]):
+    def get_by_badge(self, db: Session, *, badge_id: str) -> Optional[Employee]:
+        """Get employee by badge ID (used by MQTT client for attendance)"""
+        return db.query(self.model).filter(Employee.badge_id == badge_id).first()
+
     def get_multi_paginated(
         self,
         db: Session,
