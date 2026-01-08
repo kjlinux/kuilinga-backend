@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from sqlalchemy.orm import Session
-from app import models, schemas
+from app import crud, models, schemas
 from app.core import security
 from app.dependencies import get_current_active_user, get_db
 
@@ -133,3 +133,50 @@ def logout(
             "message": "Déconnexion réussie (locale uniquement)",
             "warning": "Les tokens n'ont pas pu être invalidés côté serveur"
         }
+
+
+@router.post(
+    "/change-password",
+    status_code=status.HTTP_200_OK,
+    summary="Changer le mot de passe",
+    description="Permet à l'utilisateur authentifié de changer son mot de passe en fournissant l'ancien mot de passe.",
+    responses={
+        200: {"description": "Mot de passe modifié avec succès"},
+        400: {"description": "Le nouveau mot de passe doit être différent de l'ancien"},
+        401: {"description": "Mot de passe actuel incorrect"},
+    },
+)
+def change_password(
+    *,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_active_user),
+    password_data: schemas.PasswordChange,
+):
+    """
+    Change le mot de passe de l'utilisateur authentifié.
+
+    - **current_password**: Le mot de passe actuel de l'utilisateur
+    - **new_password**: Le nouveau mot de passe (minimum 8 caractères)
+
+    Cette méthode est plus sécurisée que la mise à jour via PUT /users/{id}
+    car elle vérifie l'ancien mot de passe avant d'autoriser le changement.
+    """
+    # Vérifier que le mot de passe actuel est correct
+    if not security.verify_password(password_data.current_password, current_user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Mot de passe actuel incorrect"
+        )
+
+    # Vérifier que le nouveau mot de passe est différent de l'ancien
+    if security.verify_password(password_data.new_password, current_user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Le nouveau mot de passe doit être différent de l'ancien"
+        )
+
+    # Mettre à jour le mot de passe
+    hashed_password = security.get_password_hash(password_data.new_password)
+    crud.user.update(db=db, db_obj=current_user, obj_in={"hashed_password": hashed_password})
+
+    return {"message": "Mot de passe modifié avec succès"}

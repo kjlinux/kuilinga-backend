@@ -13,6 +13,7 @@ class User(BaseModel):
     hashed_password = Column(String, nullable=False)
     is_active = Column(Boolean(), default=True)
     is_superuser = Column(Boolean(), default=False)
+    avatar_url = Column(String, nullable=True)
 
     organization_id = Column(String, ForeignKey("organizations.id"), nullable=True)
 

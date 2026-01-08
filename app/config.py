@@ -61,6 +61,16 @@ class Settings(BaseSettings):
     MQTT_PASSWORD: str | None
     MQTT_TLS_ENABLED: bool
 
+    # MQTT SSL/TLS Certificates (optionnel)
+    MQTT_CA_CERT: str | None = None  # Chemin vers le certificat CA
+    MQTT_CLIENT_CERT: str | None = None  # Chemin vers le certificat client
+    MQTT_CLIENT_KEY: str | None = None  # Chemin vers la clé privée client
+    MQTT_TLS_INSECURE: bool = False  # Désactiver vérification hostname (dev only)
+
+    # Device Status Monitoring (heartbeat detection)
+    DEVICE_STATUS_CHECK_INTERVAL_SECONDS: int = 60  # Intervalle de vérification
+    DEVICE_OFFLINE_TIMEOUT_MINUTES: int = 5  # Délai avant de marquer offline
+
     class Config:
         env_file = ".env"
         case_sensitive = True

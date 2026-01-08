@@ -1,0 +1,654 @@
+openapi: 3.1.0
+info:
+  title: Kuilinga IoT Device Commands API
+  description: |
+    API pour la gestion des commandes IoT envoyées aux terminaux de pointage.
+
+    ## Vue d'ensemble
+
+    Cette API permet d'envoyer des commandes administratives aux terminaux IoT via le protocole MQTT.
+    Les commandes sont transmises sous forme de codes hexadécimaux définis par le firmware des appareils.
+
+    ## Codes de commande
+
+    | Code | Nom | Description |
+    |------|-----|-------------|
+    | `0x001020` | ACCEPTED | Badge reconnu et autorisé |
+    | `0x003020` | REFUSED | Badge désactivé par l'admin |
+    | `0x108070` | RESET | Réinitialiser l'appareil |
+    | `0x108080` | REJECTED | Badge inconnu (non trouvé en base) |
+    | `0x108090` | REBOOT | Redémarrer l'appareil |
+    | `0x1080B0` | SLEEP | Mettre l'appareil en veille |
+    | `0x100010` | STATUS | Demander le statut de l'appareil |
+
+    ## Authentification
+
+    Tous les endpoints nécessitent un token JWT valide dans le header `Authorization: Bearer {token}`.
+
+    ## Permissions
+
+    - `device:read` : Lecture des informations et statut MQTT
+    - `device:command` : Envoi de commandes aux terminaux
+
+  version: 1.0.0
+  contact:
+    name: Kuilinga Support
+    email: support@kuilinga.com
+
+servers:
+  - url: http://localhost:8000/api/v1
+    description: Serveur de développement
+  - url: https://api.kuilinga.com/api/v1
+    description: Serveur de production
+
+tags:
+  - name: Device Commands
+    description: Endpoints pour envoyer des commandes aux terminaux IoT
+  - name: MQTT Status
+    description: Endpoints pour vérifier le statut de la connexion MQTT
+
+paths:
+  /devices/{device_id}/command:
+    post:
+      tags:
+        - Device Commands
+      summary: Envoyer une commande à un terminal
+      description: |
+        Envoie une commande administrative à un terminal IoT via MQTT.
+
+        **Commandes disponibles:**
+        - `reset` (0x108070): Réinitialiser l'appareil
+        - `reboot` (0x108090): Redémarrer l'appareil
+        - `sleep` (0x1080B0): Mettre l'appareil en veille
+        - `status` (0x100010): Demander le statut de l'appareil
+
+        Le code hexadécimal correspondant est envoyé à l'appareil via MQTT sur le topic:
+        `kuilinga/devices/{serial_number}/command`
+      operationId: sendDeviceCommand
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/DeviceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceCommandRequest'
+            examples:
+              reboot:
+                summary: Redémarrer le terminal
+                value:
+                  command: reboot
+              reset:
+                summary: Réinitialiser le terminal
+                value:
+                  command: reset
+              sleep:
+                summary: Mettre en veille
+                value:
+                  command: sleep
+              status:
+                summary: Demander le statut
+                value:
+                  command: status
+      responses:
+        '200':
+          description: Commande envoyée avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceCommandResponse'
+              example:
+                success: true
+                device_id: "550e8400-e29b-41d4-a716-446655440000"
+                device_serial: "SN-DEVICE-001"
+                command: "reboot"
+                command_code: "0x108090"
+                message: "Commande REBOOT envoyée au terminal SN-DEVICE-001"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/DeviceNotFound'
+        '500':
+          $ref: '#/components/responses/CommandFailed'
+        '503':
+          $ref: '#/components/responses/MqttUnavailable'
+
+  /devices/{device_id}/reboot:
+    post:
+      tags:
+        - Device Commands
+      summary: Redémarrer un terminal
+      description: |
+        Raccourci pour envoyer la commande REBOOT (0x108090) à un terminal.
+
+        Équivalent à `POST /devices/{device_id}/command` avec `{"command": "reboot"}`
+      operationId: rebootDevice
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/DeviceId'
+      responses:
+        '200':
+          description: Commande REBOOT envoyée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceCommandResponse'
+              example:
+                success: true
+                device_id: "550e8400-e29b-41d4-a716-446655440000"
+                device_serial: "SN-DEVICE-001"
+                command: "reboot"
+                command_code: "0x108090"
+                message: "Commande REBOOT envoyée au terminal SN-DEVICE-001"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/DeviceNotFound'
+        '503':
+          $ref: '#/components/responses/MqttUnavailable'
+
+  /devices/{device_id}/reset:
+    post:
+      tags:
+        - Device Commands
+      summary: Réinitialiser un terminal
+      description: |
+        Raccourci pour envoyer la commande RESET (0x108070) à un terminal.
+
+        Cette commande remet les paramètres du terminal à leurs valeurs par défaut.
+      operationId: resetDevice
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/DeviceId'
+      responses:
+        '200':
+          description: Commande RESET envoyée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceCommandResponse'
+              example:
+                success: true
+                device_id: "550e8400-e29b-41d4-a716-446655440000"
+                device_serial: "SN-DEVICE-001"
+                command: "reset"
+                command_code: "0x108070"
+                message: "Commande RESET envoyée au terminal SN-DEVICE-001"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/DeviceNotFound'
+        '503':
+          $ref: '#/components/responses/MqttUnavailable'
+
+  /devices/{device_id}/sleep:
+    post:
+      tags:
+        - Device Commands
+      summary: Mettre un terminal en veille
+      description: |
+        Raccourci pour envoyer la commande SLEEP (0x1080B0) à un terminal.
+
+        Le terminal passe en mode basse consommation.
+      operationId: sleepDevice
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/DeviceId'
+      responses:
+        '200':
+          description: Commande SLEEP envoyée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceCommandResponse'
+              example:
+                success: true
+                device_id: "550e8400-e29b-41d4-a716-446655440000"
+                device_serial: "SN-DEVICE-001"
+                command: "sleep"
+                command_code: "0x1080B0"
+                message: "Commande SLEEP envoyée au terminal SN-DEVICE-001"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/DeviceNotFound'
+        '503':
+          $ref: '#/components/responses/MqttUnavailable'
+
+  /devices/{device_id}/status:
+    post:
+      tags:
+        - Device Commands
+      summary: Demander le statut d'un terminal
+      description: |
+        Raccourci pour envoyer la commande STATUS (0x100010) à un terminal.
+
+        Le terminal répondra avec ses informations de statut sur le topic MQTT:
+        `kuilinga/devices/{serial_number}/status`
+      operationId: requestDeviceStatus
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/DeviceId'
+      responses:
+        '200':
+          description: Commande STATUS envoyée
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceCommandResponse'
+              example:
+                success: true
+                device_id: "550e8400-e29b-41d4-a716-446655440000"
+                device_serial: "SN-DEVICE-001"
+                command: "status"
+                command_code: "0x100010"
+                message: "Commande STATUS envoyée au terminal SN-DEVICE-001"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/DeviceNotFound'
+        '503':
+          $ref: '#/components/responses/MqttUnavailable'
+
+  /devices/bulk/command:
+    post:
+      tags:
+        - Device Commands
+      summary: Envoyer une commande à plusieurs terminaux
+      description: |
+        Envoie une commande administrative à plusieurs terminaux IoT en une seule requête.
+
+        Utile pour les opérations de maintenance groupées comme:
+        - Redémarrer tous les terminaux d'un site
+        - Demander le statut de tous les appareils
+        - Mettre en veille les terminaux après les heures de bureau
+
+        La réponse inclut le détail du résultat pour chaque terminal.
+      operationId: sendBulkCommand
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceBulkCommandRequest'
+            examples:
+              statusAll:
+                summary: Demander statut de tous les terminaux
+                value:
+                  device_ids:
+                    - "550e8400-e29b-41d4-a716-446655440001"
+                    - "550e8400-e29b-41d4-a716-446655440002"
+                    - "550e8400-e29b-41d4-a716-446655440003"
+                  command: status
+              rebootAll:
+                summary: Redémarrer plusieurs terminaux
+                value:
+                  device_ids:
+                    - "550e8400-e29b-41d4-a716-446655440001"
+                    - "550e8400-e29b-41d4-a716-446655440002"
+                  command: reboot
+      responses:
+        '200':
+          description: Résultat de l'envoi groupé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceBulkCommandResponse'
+              examples:
+                allSuccess:
+                  summary: Toutes les commandes envoyées
+                  value:
+                    success: true
+                    total_devices: 3
+                    successful: 3
+                    failed: 0
+                    results:
+                      - success: true
+                        device_id: "550e8400-e29b-41d4-a716-446655440001"
+                        device_serial: "SN-001"
+                        command: "status"
+                        command_code: "0x100010"
+                        message: "Commande STATUS envoyée"
+                      - success: true
+                        device_id: "550e8400-e29b-41d4-a716-446655440002"
+                        device_serial: "SN-002"
+                        command: "status"
+                        command_code: "0x100010"
+                        message: "Commande STATUS envoyée"
+                      - success: true
+                        device_id: "550e8400-e29b-41d4-a716-446655440003"
+                        device_serial: "SN-003"
+                        command: "status"
+                        command_code: "0x100010"
+                        message: "Commande STATUS envoyée"
+                partialSuccess:
+                  summary: Succès partiel
+                  value:
+                    success: false
+                    total_devices: 3
+                    successful: 2
+                    failed: 1
+                    results:
+                      - success: true
+                        device_id: "550e8400-e29b-41d4-a716-446655440001"
+                        device_serial: "SN-001"
+                        command: "reboot"
+                        command_code: "0x108090"
+                        message: "Commande REBOOT envoyée"
+                      - success: true
+                        device_id: "550e8400-e29b-41d4-a716-446655440002"
+                        device_serial: "SN-002"
+                        command: "reboot"
+                        command_code: "0x108090"
+                        message: "Commande REBOOT envoyée"
+                      - success: false
+                        device_id: "550e8400-e29b-41d4-a716-446655440099"
+                        device_serial: "INCONNU"
+                        command: "reboot"
+                        command_code: "0x108090"
+                        message: "Terminal 550e8400-e29b-41d4-a716-446655440099 non trouvé"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '503':
+          $ref: '#/components/responses/MqttUnavailable'
+
+  /devices/mqtt/status:
+    get:
+      tags:
+        - MQTT Status
+      summary: Vérifier le statut de la connexion MQTT
+      description: |
+        Retourne l'état de la connexion au broker MQTT.
+
+        Utile pour afficher un indicateur de connectivité dans l'interface utilisateur
+        et diagnostiquer les problèmes de communication avec les terminaux.
+      operationId: getMqttStatus
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Statut de la connexion MQTT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MqttStatus'
+              examples:
+                connected:
+                  summary: Connecté au broker
+                  value:
+                    connected: true
+                    broker_host: "mqtt.example.com"
+                    broker_port: 8883
+                disconnected:
+                  summary: Déconnecté
+                  value:
+                    connected: false
+                    broker_host: null
+                    broker_port: null
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Token JWT obtenu via `/auth/login`
+
+  parameters:
+    DeviceId:
+      name: device_id
+      in: path
+      required: true
+      description: Identifiant unique du terminal (UUID)
+      schema:
+        type: string
+        format: uuid
+      example: "550e8400-e29b-41d4-a716-446655440000"
+
+  schemas:
+    DeviceCommandType:
+      type: string
+      enum:
+        - reset
+        - reboot
+        - sleep
+        - status
+      description: |
+        Type de commande administrative à envoyer au terminal.
+
+        - `reset`: Réinitialiser l'appareil (0x108070)
+        - `reboot`: Redémarrer l'appareil (0x108090)
+        - `sleep`: Mettre en veille (0x1080B0)
+        - `status`: Demander le statut (0x100010)
+
+    DeviceCommandCode:
+      type: string
+      enum:
+        - "0x001020"
+        - "0x003020"
+        - "0x108070"
+        - "0x108080"
+        - "0x108090"
+        - "0x1080B0"
+        - "0x100010"
+      description: |
+        Code hexadécimal envoyé au terminal.
+
+        **Réponses de validation de badge:**
+        - `0x001020` (ACCEPTED): Badge reconnu et autorisé
+        - `0x003020` (REFUSED): Badge désactivé par l'admin
+        - `0x108080` (REJECTED): Badge inconnu
+
+        **Commandes administratives:**
+        - `0x108070` (RESET): Réinitialiser
+        - `0x108090` (REBOOT): Redémarrer
+        - `0x1080B0` (SLEEP): Mettre en veille
+        - `0x100010` (STATUS): Demander statut
+
+    DeviceCommandRequest:
+      type: object
+      required:
+        - command
+      properties:
+        command:
+          $ref: '#/components/schemas/DeviceCommandType'
+      example:
+        command: reboot
+
+    DeviceCommandResponse:
+      type: object
+      required:
+        - success
+        - device_id
+        - device_serial
+        - command
+        - command_code
+        - message
+      properties:
+        success:
+          type: boolean
+          description: Indique si la commande a été envoyée avec succès
+        device_id:
+          type: string
+          format: uuid
+          description: Identifiant unique du terminal
+        device_serial:
+          type: string
+          description: Numéro de série du terminal
+        command:
+          type: string
+          description: Type de commande envoyée
+        command_code:
+          type: string
+          description: Code hexadécimal envoyé au terminal
+        message:
+          type: string
+          description: Message de confirmation ou d'erreur
+
+    DeviceBulkCommandRequest:
+      type: object
+      required:
+        - device_ids
+        - command
+      properties:
+        device_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+          description: Liste des identifiants des terminaux
+        command:
+          $ref: '#/components/schemas/DeviceCommandType'
+      example:
+        device_ids:
+          - "550e8400-e29b-41d4-a716-446655440001"
+          - "550e8400-e29b-41d4-a716-446655440002"
+        command: status
+
+    DeviceBulkCommandResponse:
+      type: object
+      required:
+        - success
+        - total_devices
+        - successful
+        - failed
+        - results
+      properties:
+        success:
+          type: boolean
+          description: True si toutes les commandes ont été envoyées avec succès
+        total_devices:
+          type: integer
+          description: Nombre total de terminaux ciblés
+        successful:
+          type: integer
+          description: Nombre de commandes envoyées avec succès
+        failed:
+          type: integer
+          description: Nombre d'échecs
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/DeviceCommandResponse'
+          description: Détail du résultat pour chaque terminal
+
+    MqttStatus:
+      type: object
+      properties:
+        connected:
+          type: boolean
+          description: Indique si le backend est connecté au broker MQTT
+        broker_host:
+          type: string
+          nullable: true
+          description: Adresse du broker MQTT (null si déconnecté)
+        broker_port:
+          type: integer
+          nullable: true
+          description: Port du broker MQTT (null si déconnecté)
+
+    BadgeValidationResponse:
+      type: object
+      description: |
+        Structure de la réponse envoyée au terminal via MQTT lors de la validation d'un badge.
+        Cette structure est envoyée sur le topic `kuilinga/devices/{serial}/response`.
+      properties:
+        code:
+          type: string
+          description: Code hexadécimal de la réponse
+          example: "0x001020"
+        status:
+          type: string
+          enum:
+            - ACCEPTED
+            - REFUSED
+            - REJECTED
+          description: Statut de la validation
+        message:
+          type: string
+          description: Message pour l'affichage sur le terminal
+          example: "Bonjour Jean Dupont"
+        employee_name:
+          type: string
+          nullable: true
+          description: Nom de l'employé (si trouvé)
+        timestamp:
+          type: string
+          format: date-time
+          description: Horodatage de la réponse
+
+    Error:
+      type: object
+      properties:
+        detail:
+          type: string
+          description: Message d'erreur détaillé
+
+  responses:
+    Unauthorized:
+      description: Non authentifié - Token JWT manquant ou invalide
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            detail: "Could not validate credentials"
+
+    Forbidden:
+      description: Permission insuffisante - L'utilisateur n'a pas la permission `device:command`
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            detail: "Permissions insuffisantes"
+
+    DeviceNotFound:
+      description: Terminal non trouvé
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            detail: "Terminal non trouvé"
+
+    CommandFailed:
+      description: Échec de l'envoi de la commande
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            detail: "Échec de l'envoi de la commande"
+
+    MqttUnavailable:
+      description: Service MQTT non disponible - Le backend n'est pas connecté au broker MQTT
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            detail: "Service MQTT non disponible"

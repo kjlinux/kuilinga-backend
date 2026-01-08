@@ -63,8 +63,18 @@ from .report import (
 from .role import Role, RoleCreate, RoleUpdate, Permission, PermissionCreate, PermissionUpdate
 from .shift import Shift, ShiftCreate, ShiftUpdate
 from .token import Token, TokenPayload, RefreshTokenRequest
-from .user import User, UserCreate, UserUpdate
+from .user import User, UserCreate, UserUpdate, PasswordChange, AvatarUploadResponse
 from .site import Site, SiteCreate, SiteUpdate
 from .leave import Leave, LeaveCreate, LeaveUpdate
 from .paginated_response import PaginatedResponse
+from .device_command import (
+    DeviceCommandCode,
+    DeviceCommandType,
+    DeviceCommandRequest,
+    DeviceCommandResponse,
+    BadgeValidationResponse,
+    DeviceBulkCommandRequest,
+    DeviceBulkCommandResponse,
+    COMMAND_TYPE_TO_CODE,
+)
 from . import dashboard

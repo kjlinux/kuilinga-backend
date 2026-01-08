@@ -28,7 +28,14 @@
       "Bash(\"c:/laragon/www/kuilinga-backend/venv/Scripts/python.exe\":*)",
       "Bash(\"c:/laragon/www/kuilinga-backend/venv/Scripts/python.exe\" -c:*)",
       "Bash(\"c:/laragon/www/kuilinga-backend/venv/Scripts/python.exe\" -c \"import sys; sys.path.insert\\(0, ''c:/laragon/www/kuilinga-backend''\\); from app.db.session import SessionLocal; from app.crud.user import user; from app.core.security import verify_password; db = SessionLocal\\(\\); u = user.get_by_email\\(db, email=''admin@kuilinga.com''\\); print\\(''Password admin123 valid:'', verify_password\\(''admin123'', u.hashed_password\\)\\)\")",
-      "Bash(\"c:/laragon/www/kuilinga-backend/venv/Scripts/python.exe\" -c \"\nimport sys\nsys.path.insert\\(0, ''c:/laragon/www/kuilinga-backend''\\)\nfrom app.db.session import SessionLocal\nfrom app.crud.user import user\nfrom app.core.security import get_password_hash\n\ndb = SessionLocal\\(\\)\nu = user.get_by_email\\(db, email=''admin@kuilinga.com''\\)\nif u:\n    new_hash = get_password_hash\\(''admin123''\\)\n    u.hashed_password = new_hash\n    db.commit\\(\\)\n    print\\(''Password reset to admin123''\\)\n    # Verify it works now\n    from app.core.security import verify_password\n    db.refresh\\(u\\)\n    print\\(''Verification:'', verify_password\\(''admin123'', u.hashed_password\\)\\)\nelse:\n    print\\(''User not found''\\)\ndb.close\\(\\)\n\")"
+      "Bash(\"c:/laragon/www/kuilinga-backend/venv/Scripts/python.exe\" -c \"\nimport sys\nsys.path.insert\\(0, ''c:/laragon/www/kuilinga-backend''\\)\nfrom app.db.session import SessionLocal\nfrom app.crud.user import user\nfrom app.core.security import get_password_hash\n\ndb = SessionLocal\\(\\)\nu = user.get_by_email\\(db, email=''admin@kuilinga.com''\\)\nif u:\n    new_hash = get_password_hash\\(''admin123''\\)\n    u.hashed_password = new_hash\n    db.commit\\(\\)\n    print\\(''Password reset to admin123''\\)\n    # Verify it works now\n    from app.core.security import verify_password\n    db.refresh\\(u\\)\n    print\\(''Verification:'', verify_password\\(''admin123'', u.hashed_password\\)\\)\nelse:\n    print\\(''User not found''\\)\ndb.close\\(\\)\n\")",
+      "Bash(\"c:/laragon/www/kuilinga-backend/venv/Scripts/python.exe\" -m alembic revision --autogenerate -m \"add delivery_method to devices\")",
+      "Bash(\"c:/laragon/www/kuilinga-backend/venv/Scripts/python.exe\" -m alembic upgrade head)",
+      "Bash(venv/Scripts/python.exe -m alembic revision:*)",
+      "Bash(venv/Scripts/python.exe -m alembic upgrade:*)",
+      "Bash(venv/Scripts/python.exe:*)",
+      "Bash(./venv/Scripts/python:*)",
+      "Bash(venvScriptspython.exe -m alembic revision --autogenerate -m \"add_avatar_url_to_users\")"
     ],
     "deny": [],
     "ask": []

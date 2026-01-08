@@ -26,7 +26,20 @@ class User(UserBase):
     id: str = Field(..., example="user_a3a2e3a4-5b6c-7d8e-9f0a-1b2c3d4e5f67", description="Identifiant unique de l'utilisateur")
     is_active: bool = Field(..., description="Indique si le compte est actif")
     is_superuser: bool = Field(..., description="Indique si l'utilisateur a tous les droits")
+    avatar_url: Optional[str] = Field(None, description="URL de la photo de profil")
     roles: List[Role] = Field([], description="Liste des rôles attribués à l'utilisateur")
 
     class Config:
         from_attributes = True
+
+
+# Schéma pour le changement de mot de passe sécurisé
+class PasswordChange(BaseModel):
+    current_password: str = Field(..., min_length=1, description="Mot de passe actuel")
+    new_password: str = Field(..., min_length=8, description="Nouveau mot de passe (minimum 8 caractères)")
+
+
+# Schéma pour la réponse d'upload d'avatar
+class AvatarUploadResponse(BaseModel):
+    avatar_url: str = Field(..., description="URL de la photo de profil uploadée")
+    message: str = Field(default="Avatar uploadé avec succès")
